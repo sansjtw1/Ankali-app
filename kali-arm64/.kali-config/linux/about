@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# 介绍我自己! ✧⁺⸜(●˙▾˙●)⸝⁺
+
+CONFIG_FILE="/.kali-config/Ankali.conf"
+
+LANGUAGE=$(grep -v '^//' "$CONFIG_FILE" | grep -w 'LANGUAGE' | cut -d '=' -f2)
+
+about_cn(){
+echo "Ankali App是一款利用Proot在非Linux环境下的Android设备上创建一个隔离的无需在Android上获取Root的“chroot”环境模拟来运行Kali Linux环境。
+Proot允许在没有传统Linux内核支持的情况下，模拟Linux环境的必要部分。
+Ankali利用Android终端模拟器简易安装运行kali rolling，大大的简易了安装过程。
+相关网站(点击跳转):
+- Proot: https://github.com/proot-me/proot
+- Kali Linux: https://www.kali.org/
+- tmoe: https://github.com/2moe/tmoe
+- katoolin: https://github.com/LionSec/katoolin
+
+Ankali App说明链接:
+- Gitee官方仓库: https://gitee.com/sansjtw/Ankali-app
+- Github官方仓库: https://github.com/sansjtw1/Ankali-app
+- 免责声明: https://gitee.com/sansjtw/Ankali-app/blob/master/免责声明.md
+- 隐私条约: https://gitee.com/sansjtw/Ankali-app/blob/master/隐私条约.md
+"
+echo
+echo "按回車鍵繼續"
+read
+}
+about_en(){
+echo "The Ankali App is a tool that leverages Proot to create an isolated "chroot" environment on Android devices without the need for rooting, in order to run a Kali Linux environment within a non-Linux environment. Proot allows the simulation of necessary parts of a Linux environment without traditional Linux kernel support. Ankali simplifies the installation process by using an Android terminal emulator to run kali rolling, greatly easing the setup.
+
+Related websites (click to navigate):
+- Proot: https://github.com/proot-me/PRoot
+- Kali Linux: https://www.kali.org/
+- tmoe: https://github.com/2moe/tmoe
+- katoolin: https://github.com/LionSec/katoolin
+
+Ankali App documentation links:
+- Gitee repository official: https://github.com/sansjtw/Ankali-app
+- GitHub repository official: https://github.com/sansjtw1/Ankali-app
+- Disclaimer: https://github.com/sansjtw1/Ankali-app/blob/master/Disclaimer.md
+- Privacy Policy: https://github.com/sansjtw1/Ankali-app/blob/master/Privacy%20Policy.md
+"
+echo "Press enter to continue."
+read
+}
+
+if [ "$LANGUAGE" = "CN" ]; then
+    about_cn
+elif [ "$LANGUAGE" = "EN" ]; then
+    about_en
+else
+    about_en
+fi

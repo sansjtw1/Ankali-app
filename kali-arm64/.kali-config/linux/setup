@@ -1,0 +1,295 @@
+#!/bin/bash
+# Ankali's setting options, which vary according to different languages.
+# 做你喜欢的An kali(⑅˃◡˂⑅)
+
+# 定义颜色
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+RESET='\033[0m'
+
+# 配置文件路径
+CONFIG_FILE="/.kali-config/Ankali.conf"
+
+# 日志文件路径
+LOG_DIR="/.kali-config/log"
+LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d').log"
+
+# 创建日志目录
+mkdir -p "$LOG_DIR"
+
+# 定义日志函数
+log() {
+    echo -e "$1" >> "$LOG_FILE"
+    echo -e "$2" # 显示在终端上的内容
+}
+
+# 读取配置文件中的值，忽略注释行
+get_config_value() {
+    local key="$1"
+    grep -E "^[^/]" "$CONFIG_FILE" | grep -E "^$key=" | cut -d'=' -f2
+}
+
+# 从配置文件中获取值
+INITIALIZATION=$(get_config_value "INITIALIZATION")
+LANGUAGE=$(get_config_value "LANGUAGE")
+NOOPENMENU=$(get_config_value "NOOPENMENU")
+NEOFETCH=$(get_config_value "NEOFETCH")
+OPTIMIZE=$(get_config_value "OPTIMIZE")
+DEPLOY=$(get_config_value "DEPLOY")
+
+# 将语言设置转换为对应的显示文本
+YYWT_TT(){
+if [[ "$LANGUAGE" == "CN" ]]; then
+    DISPLAY_LANGUAGE="中文"
+    DISPLAY_SELF_START=$( [[ "$NOOPENMENU" == "true" ]] && echo "开启" || echo "关闭" )
+    DISPLAY_NEFOFETCH=$( [[ "$NEOFETCH" == "true" ]] && echo "开启" || echo "关闭" )
+else
+    DISPLAY_LANGUAGE="English"
+    DISPLAY_SELF_START=$( [[ "$NOOPENMENU" == "true" ]] && echo "Enabled" || echo "Disabled" )
+    DISPLAY_NEFOFETCH=$( [[ "$NEOFETCH" == "true" ]] && echo "Enabled" || echo "Disabled" )
+fi
+}
+YYWT_TT
+
+# 显示主菜单
+main_menu_cn() {
+    while true; do
+        echo -e "${CYAN}设置${RESET}"
+        echo -e "${GREEN}[1]${RESET} 配置DNS地址"
+        echo -e "${GREEN}[2]${RESET} 配置软件源地址"
+        echo -e "${GREEN}[3]${RESET} 功能菜单设置"
+        echo -e "${GREEN}[4]${RESET} 清除日志文件"
+        echo -e "${GREEN}[5]${RESET} 退出"
+        read -p "选择一个选项 [1-5]: " choice
+
+        case $choice in
+            1)
+                echo -e "${YELLOW}输入新的DNS地址，可输入多条。输入';'后回车保存到 /etc/resolv.conf:${RESET}"
+                temp_dns=""
+                while IFS= read -r line; do
+                    if [[ "$line" == ";" ]]; then
+                        break
+                    fi
+                    temp_dns+="$line"$'\n'
+                done
+                log "[*] Saving DNS addresses to /etc/resolv.conf..." "${YELLOW}保存 DNS 地址到 /etc/resolv.conf...${RESET}"
+                echo -e "$temp_dns" | tee /etc/resolv.conf > /dev/null
+                ;;
+            2)
+                echo -e "${YELLOW}输入新的软件源地址，可输入多条。输入';'后回车保存到 /etc/apt/sources.list:${RESET}"
+                temp_source=""
+                while IFS= read -r line; do
+                    if [[ "$line" == ";" ]]; then
+                        break
+                    fi
+                    temp_source+="$line"$'\n'
+                done
+                log "[*] Saving software source addresses to /etc/apt/sources.list..." "${YELLOW}保存软件源地址到 /etc/apt/sources.list...${RESET}"
+                echo -e "$temp_source" | tee /etc/apt/sources.list > /dev/null
+                apt update
+                ;;
+            3)
+                feature_menu_cn
+                ;;
+            4)
+                log "[*] Clearing log files..." "${YELLOW}清除日志文件...${RESET}"
+                rm -fr "$LOG_DIR" && log "[+] Log files cleared." "${GREEN}[+] 日志文件已清除.${RESET}" || log "[!] Failed to clear log files." "${RED}[!] 清除日志文件失败.${RESET}"
+                mkdir "$LOG_DIR"
+                ;;
+            5)
+                exit 1
+                ;;
+            *)
+                log "[!] Invalid choice. Please select a valid option." "${RED}[!] 无效选择，请重新输入.${RESET}"
+                ;;
+        esac
+    done
+}
+
+# 功能菜单设置
+feature_menu_cn() {
+    while true; do
+        echo -e "${CYAN}功能菜单设置${RESET}"
+        echo -e "${GREEN}[1]${RESET} 自启动功能菜单: ${DISPLAY_SELF_START}"
+        echo -e "${GREEN}[2]${RESET} 功能菜单语言: ${DISPLAY_LANGUAGE}"
+        echo -e "${GREEN}[3]${RESET} 启动Neofetch: ${DISPLAY_NEFOFETCH}"
+        echo -e "${GREEN}[4]${RESET} 退出"
+        read -p "选择一个选项 [1-4]: " option
+
+        case $option in
+            1)
+                if [[ "$NOOPENMENU" == "true" ]]; then
+                    NOOPENMENU="false"
+                    log "[!] Notice: When you disable the feature menu, you can re-enable and access it by typing 'kali-menu' or 'ankali' in Kali Linux." "${YELLOW}[!] 注意！当你关闭功能菜单后你可以在kail Linux输入kail-menu或者ankail重新开启并进入功能菜单${RESET}"
+                else
+                    NOOPENMENU="true"
+                fi
+                # 更新配置文件中的值
+                sed -i "s/^NOOPENMENU=.*/NOOPENMENU=$NOOPENMENU/" "$CONFIG_FILE"
+                YYWT_TT
+                ;;
+            2)
+                if [[ "$LANGUAGE" == "CN" ]]; then
+                    LANGUAGE="EN"
+                    log "[!] Notice: You need to restart the effective menu after changing the language" "${YELLOW}[!] 更换语言后需要重启生效菜单哦${RESET}"
+                else
+                    LANGUAGE="CN"
+                    log "[!] Notice: You need to restart the effective menu after changing the language" "${YELLOW}[!] 更换语言后需要重启生效菜单哦${RESET}"
+                fi
+                # 更新配置文件中的值
+                sed -i "s/^LANGUAGE=.*/LANGUAGE=$LANGUAGE/" "$CONFIG_FILE"
+                YYWT_TT
+                ;;
+            3)
+                if [[ "$NEOFETCH" == "true" ]]; then
+                    NEOFETCH="false"
+                else
+                    NEOFETCH="true"
+                fi
+                # 更新配置文件中的值
+                sed -i "s/^NEOFETCH=.*/NEOFETCH=$NEOFETCH/" "$CONFIG_FILE"
+                YYWT_TT
+                ;;
+            4)
+                exit 1
+                ;;
+            *)
+                log "[!] Invalid choice. Please select a valid option." "${RED}[!] 无效选择，请重新输入.${RESET}"
+                ;;
+        esac
+    done
+}
+
+# Main menu display
+main_menu_en() {
+    while true; do
+        echo -e "${CYAN}Settings${RESET}"
+        echo -e "${GREEN}[1]${RESET} Configure DNS Address"
+        echo -e "${GREEN}[2]${RESET} Configure Software Source Address"
+        echo -e "${GREEN}[3]${RESET} Feature Menu Settings"
+        echo -e "${GREEN}[4]${RESET} Clear Log Files"
+        echo -e "${GREEN}[5]${RESET} Exit"
+        read -p "Choose an option [1-5]: " choice
+
+        case $choice in
+            1)
+                log "Prompting user to input new DNS addresses" "${YELLOW}Enter new DNS addresses, multiple entries allowed. Input ';' and press enter to save to /etc/resolv.conf:${RESET}"
+                temp_dns=""
+                while IFS= read -r line; do
+                    if [[ "$line" == ";" ]]; then
+                        break
+                    fi
+                    temp_dns+="$line"$'\n'
+                done
+                log "Saving DNS addresses to /etc/resolv.conf" "${YELLOW}Saving DNS addresses to /etc/resolv.conf...${RESET}"
+                echo -e "$temp_dns" | tee /etc/resolv.conf > /dev/null
+                ;;
+            2)
+                log "Prompting user to input new software source addresses" "${YELLOW}Enter new software source addresses, multiple entries allowed. Input ';' and press enter to save to /etc/apt/sources.list:${RESET}"
+                temp_source=""
+                while IFS= read -r line; do
+                    if [[ "$line" == ";" ]]; then
+                        break
+                    fi
+                    temp_source+="$line"$'\n'
+                done
+                log "Saving software source addresses to /etc/apt/sources.list and updating" "${YELLOW}Saving software source addresses to /etc/apt/sources.list...${RESET}"
+                echo -e "$temp_source" | tee /etc/apt/sources.list > /dev/null
+                apt update
+                ;;
+            3)
+                log "Opening feature menu settings" "${YELLOW}Opening feature menu settings...${RESET}"
+                feature_menu_en
+                ;;
+            4)
+                log "Clearing log files" "${YELLOW}Clearing log files...${RESET}"
+                rm -fr "/.kali-config/log" && log "Log files cleared" "${GREEN}[+] Log files cleared.${RESET}" || log "Failed to clear log files" "${RED}[!] Failed to clear log files.${RESET}"
+                mkdir /.kali-config/log
+                ;;
+            5)
+                log "Exiting script" "${YELLOW}Exiting...${RESET}"
+                exit 1
+                ;;
+            *)
+                log "Invalid selection, prompting user to try again" "${RED}[!] Invalid selection, please try again.${RESET}"
+                ;;
+        esac
+    done
+}
+
+# Feature menu settings
+feature_menu_en() {
+    while true; do
+        echo -e "${CYAN}Feature Menu Settings${RESET}"
+        echo -e "${GREEN}[1]${RESET} Auto-start feature menu: ${DISPLAY_SELF_START}"
+        echo -e "${GREEN}[2]${RESET} Feature menu language: ${DISPLAY_LANGUAGE}"
+        echo -e "${GREEN}[3]${RESET} Start Neofetch: ${DISPLAY_NEFOFETCH}"
+        echo -e "${GREEN}[4]${RESET} Exit"
+        read -p "Choose an option [1-4]: " option
+
+        case $option in
+            1)
+                log "Toggling auto-start feature menu setting" "${YELLOW}Toggling auto-start feature menu...${RESET}"
+                if [[ "$NOOPENMENU" == "true" ]]; then
+                    NOOPENMENU="false"
+                    log "User disabled auto-start feature menu" "${YELLOW}Warning! Disabling auto-start feature menu. You can re-enable it by typing 'kail-menu' or 'ankail' in the terminal.${RESET}"
+                else
+                    NOOPENMENU="true"
+                    log "User enabled auto-start feature menu" "${YELLOW}Auto-start feature menu enabled.${RESET}"
+                fi
+                # Update the configuration file with the new value
+                sed -i "s/^NOOPENMENU=.*/NOOPENMENU=$NOOPENMENU/" "$CONFIG_FILE"
+                YYWT_TT
+                ;;
+            2)
+                log "Toggling feature menu language setting" "${YELLOW}Toggling feature menu language...${RESET}"
+                if [[ "$LANGUAGE" == "CN" ]]; then
+                    LANGUAGE="EN"
+                    log "[!] Notice: You need to restart the effective menu after changing the language" "${YELLOW}[!] You need to restart the effective menu after changing the language${RESET}"
+                else
+                    LANGUAGE="CN"
+                    log "[!] Notice: You need to restart the effective menu after changing the language" "${YELLOW}[!] You need to restart the effective menu after changing the language${RESET}"
+                fi
+                # Update the configuration file with the new value
+                sed -i "s/^LANGUAGE=.*/LANGUAGE=$LANGUAGE/" "$CONFIG_FILE"
+                YYWT_TT
+                ;;
+            3)
+                log "Toggling Neofetch setting" "${YELLOW}Toggling Neofetch setting...${RESET}"
+                if [[ "$NEOFETCH" == "true" ]]; then
+                    NEOFETCH="false"
+                    log "User disabled Neofetch" "${YELLOW}Neofetch disabled.${RESET}"
+                else
+                    NEOFETCH="true"
+                    log "User enabled Neofetch" "${YELLOW}Neofetch enabled.${RESET}"
+                fi
+                # Update the configuration file with the new value
+                sed -i "s/^NEOFETCH=.*/NEOFETCH=$NEOFETCH/" "$CONFIG_FILE"
+                YYWT_TT
+                ;;
+            4)
+                log "Exiting feature menu" "${YELLOW}Exiting feature menu...${RESET}"
+                exit 1
+                ;;
+            *)
+                log "Invalid selection, prompting user to try again" "${RED}[!] Invalid selection, please try again.${RESET}"
+                ;;
+        esac
+    done
+}
+
+CONFIG_FILE="/.kali-config/Ankali.conf"
+
+LANGUAGE=$(grep -v '^//' "$CONFIG_FILE" | grep -w 'LANGUAGE' | cut -d '=' -f2)
+
+if [ "$LANGUAGE" = "CN" ]; then
+    main_menu_cn
+elif [ "$LANGUAGE" = "EN" ]; then
+    main_menu_en
+else
+    main_menu_en
+fi
+
+# © Sansjtw Ankali

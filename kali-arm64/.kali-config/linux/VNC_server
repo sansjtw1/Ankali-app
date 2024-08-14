@@ -1,0 +1,376 @@
+#!/bin/bash
+
+# This script menu uses the installation startup of VNC service and the installation startup of graphical desktop.
+
+# 让你真正看到我的样子ヾ(≧O≦)〃
+
+# 定义颜色
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+RESET='\033[0m'
+
+# 更新系统
+echo -e "${YELLOW}[*] Updating system...${RESET}"
+apt update
+
+# 创建配置文件夹
+mkdir -p ~/.kali-config
+
+# 检查并清理冲突的锁文件
+if [ -f /tmp/.X1-lock ] || [ -f /tmp/.X11-unix/X1 ]; then
+    echo -e "${YELLOW}[*] Removing stale X server lock files...${RESET}"
+    rm -f /tmp/.X1-lock
+    rm -f /tmp/.X11-unix/X1
+fi
+
+# Set log file path
+LOG_DIR="/.kali-config/log"
+LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d').log"
+
+# Create log directory
+mkdir -p "$LOG_DIR"
+
+# Define log function
+log() {
+    echo -e "$1" >> "$LOG_FILE"
+    echo -e "$2" # Display content in terminal
+}
+
+#Chinese menu
+menu_cn(){
+while true; do
+    log "[INFO] 显示主菜单" "${CYAN}请选择一个选项:${RESET}"
+    echo -e "${GREEN}[1]${RESET} ${BLUE}安装 GUI 图形桌面${RESET}"
+    echo -e "${GREEN}[2]${RESET} ${BLUE}VNC 服务${RESET}"
+    read -p "请输入你的选择: " choice
+
+    if [[ $choice -eq 1 ]]; then
+        # GUI 图形桌面菜单
+        while true; do
+            log "[INFO] 显示 GUI 图形桌面菜单" "${CYAN}选择一个图形桌面环境安装:${RESET}"
+            echo -e "${GREEN}[1]${RESET} GNOME"
+            echo -e "${GREEN}[2]${RESET} KDE Plasma"
+            echo -e "${GREEN}[3]${RESET} XFCE"
+            echo -e "${GREEN}[4]${RESET} MATE"
+            echo -e "${GREEN}[5]${RESET} LXDE"
+            echo -e "${GREEN}[6]${RESET} Cinnamon"
+            echo -e "${GREEN}[0]${RESET} 退出"
+            read -p "请输入你的选择: " gui_choice
+
+            case $gui_choice in
+                1)
+                    log "[INFO] 安装 GNOME" "${YELLOW}[+] 正在安装 GNOME...${RESET}"
+                    apt install -y kali-desktop-gnome
+                    echo "kali-desktop-gnome" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                2)
+                    log "[INFO] 安装 KDE Plasma" "${YELLOW}[+] 正在安装 KDE Plasma...${RESET}"
+                    apt install -y kali-desktop-kde
+                    echo "kali-desktop-kde" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                3)
+                    log "[INFO] 安装 XFCE" "${YELLOW}[+] 正在安装 XFCE...${RESET}"
+                    apt install -y kali-desktop-xfce
+                    echo "kali-desktop-xfce" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                4)
+                    log "[INFO] 安装 MATE" "${YELLOW}[+] 正在安装 MATE...${RESET}"
+                    apt install -y kali-desktop-mate
+                    echo "kali-desktop-mate" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                5)
+                    log "[INFO] 安装 LXDE" "${YELLOW}[+] 正在安装 LXDE...${RESET}"
+                    apt install -y kali-desktop-lxde
+                    echo "kali-desktop-lxde" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                6)
+                    log "[INFO] 安装 Cinnamon" "${YELLOW}[+] 正在安装 Cinnamon...${RESET}"
+                    apt install -y kali-desktop-cinnamon
+                    echo "kali-desktop-cinnamon" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                0)
+                    exit 1
+                    ;;
+                *)
+                    log "[WARNING] 无效选择" "${RED}[!] 无效的选择，请重试。${RESET}"
+                    ;;
+            esac
+        done
+        break
+    elif [[ $choice -eq 2 ]]; then
+        # VNC 服务菜单
+        while true; do
+            log "[INFO] 显示 VNC 服务菜单" "${CYAN}选择一个VNC服务选项:${RESET}"
+            echo -e "${GREEN}[1]${RESET} 安装VNC服务"
+            echo -e "${GREEN}[2]${RESET} 配置VNC密码"
+            echo -e "${GREEN}[3]${RESET} 启动桌面与VNC服务"
+            echo -e "${GREEN}[0]${RESET} 退出"
+            read -p "请输入你的选择: " vnc_choice
+
+            case $vnc_choice in
+                1)
+                    log "[INFO] 安装 VNC 服务" "${YELLOW}[+] 正在安装VNC服务...${RESET}"
+                    apt install -y tigervnc-standalone-server xinit
+                    ;;
+                2)
+                    log "[INFO] 配置 VNC 密码" "${YELLOW}[+] 正在配置VNC密码...${RESET}"
+                    vncpasswd
+                    ;;
+                3)
+                    # 检查已安装的桌面环境
+                    if [ -f ~/.kali-config/kali-desktop ]; then
+                        desktops=($(cat ~/.kali-config/kali-desktop))
+                        if [ ${#desktops[@]} -gt 1 ]; then
+                            log "[INFO] 找到多个桌面环境" "${CYAN}找到多个桌面，请选择一个开始${RESET}"
+                            for i in "${!desktops[@]}"; do
+                                echo -e "${GREEN}[$((i+1))]${RESET} ${desktops[$i]}"
+                            done
+                            read -p "请输入你的选择: " desktop_choice
+                            selected_desktop=${desktops[$((desktop_choice-1))]}
+                        else
+                            selected_desktop=${desktops[0]}
+                        fi
+                        log "[INFO] 启动 VNC 服务" "${YELLOW}[+] 正在使用 ${selected_desktop} 启动 VNC 服务...${RESET}"
+
+                        case $selected_desktop in
+                            "kali-desktop-gnome")
+                                startx &
+                                ;;
+                            "kali-desktop-kde")
+                                startplasma-x11 &
+                                ;;
+                            "kali-desktop-xfce")
+                                startxfce4 &
+                                ;;
+                            "kali-desktop-mate")
+                                mate-session &
+                                ;;
+                            "kali-desktop-lxde")
+                                startlxde &
+                                ;;
+                            "kali-desktop-cinnamon")
+                                cinnamon-session &
+                                ;;
+                            *)
+                                log "[ERROR] 未识别的桌面环境" "${RED}[!] 未识别的桌面环境，尝试手动启动。${RESET}"
+                                ;;
+                        esac
+
+                        # 启动VNC服务器
+                        vncserver
+
+                        # 检查VNC服务器是否成功启动
+                        if [ $? -ne 0 ]; then
+                            log "[ERROR] 启动 VNC 服务器失败" "${RED}[!] 启动VNC服务器失败。检查问题...${RESET}"
+                            # 检查Xorg日志文件中的错误
+                            if grep -q "no screens found" /var/log/Xorg.0.log; then
+                                log "[ERROR] 未找到屏幕" "${RED}[!] 未找到屏幕。您可能需要安装或配置虚拟显示器如Xvfb。${RESET}"
+                            fi
+                            log "[INFO] 检查日志文件以获取更多信息" "${YELLOW}[i] 您也可以在 /var/log/Xorg.0.log 中检查日志文件以获取更多详细信息。${RESET}"
+                        else
+                            log "[SUCCESS] 成功启动 VNC 服务器" "${GREEN}[+] VNC 服务器成功启动在显示器 :2。${RESET}"
+                        fi
+
+                    else
+                        log "[ERROR] 未找到桌面环境" "${RED}[!] 未找到桌面环境，请先安装一个。${RESET}"
+                    fi
+                    ;;
+                0)
+                    exit 1
+                    ;;
+                *)
+                    log "[WARNING] 无效选择" "${RED}[!] 无效的选择，请重试。${RESET}"
+                    ;;
+            esac
+        done
+        break
+    else
+        log "[WARNING] 无效选择" "${RED}[!] 无效的选择，请重试。${RESET}"
+    fi
+done
+}
+
+# English menu
+menu_en(){
+while true; do
+    log "[i] Displaying main menu" "${CYAN}Please choose an option:${RESET}"
+    echo -e "${GREEN}[1]${RESET} ${BLUE}Install GUI Graphical Desktop${RESET}"
+    echo -e "${GREEN}[2]${RESET} ${BLUE}VNC Service${RESET}"
+    read -p "Enter your choice: " choice
+
+    if [[ $choice -eq 1 ]]; then
+        log "[i] User selected option 1: Install GUI Graphical Desktop" "${CYAN}Choose a graphical desktop environment to install:${RESET}"
+        # GUI Graphical Desktop Menu
+        while true; do
+            echo -e "${GREEN}[1]${RESET} GNOME"
+            echo -e "${GREEN}[2]${RESET} KDE Plasma"
+            echo -e "${GREEN}[3]${RESET} XFCE"
+            echo -e "${GREEN}[4]${RESET} MATE"
+            echo -e "${GREEN}[5]${RESET} LXDE"
+            echo -e "${GREEN}[6]${RESET} Cinnamon"
+            echo -e "${GREEN}[0]${RESET} Exit"
+            read -p "Enter your choice: " gui_choice
+
+            case $gui_choice in
+                1)
+                    log "[i] Installing GNOME..." "${YELLOW}[+] Installing GNOME...${RESET}"
+                    apt install -y kali-desktop-gnome
+                    echo "kali-desktop-gnome" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                2)
+                    log "[i] Installing KDE Plasma..." "${YELLOW}[+] Installing KDE Plasma...${RESET}"
+                    apt install -y kali-desktop-kde
+                    echo "kali-desktop-kde" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                3)
+                    log "[i] Installing XFCE..." "${YELLOW}[+] Installing XFCE...${RESET}"
+                    apt install -y kali-desktop-xfce
+                    echo "kali-desktop-xfce" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                4)
+                    log "[i] Installing MATE..." "${YELLOW}[+] Installing MATE...${RESET}"
+                    apt install -y kali-desktop-mate
+                    echo "kali-desktop-mate" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                5)
+                    log "[i] Installing LXDE..." "${YELLOW}[+] Installing LXDE...${RESET}"
+                    apt install -y kali-desktop-lxde
+                    echo "kali-desktop-lxde" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                6)
+                    log "[i] Installing Cinnamon..." "${YELLOW}[+] Installing Cinnamon...${RESET}"
+                    apt install -y kali-desktop-cinnamon
+                    echo "kali-desktop-cinnamon" >> ~/.kali-config/kali-desktop
+                    break
+                    ;;
+                0)
+                    log "[i] User chose to exit from GUI installation menu" "Exiting..."
+                    exit 1
+                    ;;
+                *)
+                    log "[!] Invalid choice in GUI menu" "${RED}[!] Invalid choice, please try again.${RESET}"
+                    ;;
+            esac
+        done
+        break
+    elif [[ $choice -eq 2 ]]; then
+        log "[i] User selected option 2: VNC Service" "${CYAN}Choose a VNC service option:${RESET}"
+        # VNC Service Menu
+        while true; do
+            echo -e "${GREEN}[1]${RESET} Install VNC Service"
+            echo -e "${GREEN}[2]${RESET} Configure VNC Password"
+            echo -e "${GREEN}[3]${RESET} Start desktop and VNC services"
+            echo -e "${GREEN}[0]${RESET} Exit"
+            read -p "Enter your choice: " vnc_choice
+
+            case $vnc_choice in
+                1)
+                    log "[i] Installing VNC Service..." "${YELLOW}[+] Installing VNC Service...${RESET}"
+                    apt install -y tigervnc-standalone-server xinit
+                    ;;
+                2)
+                    log "[i] Configuring VNC Password..." "${YELLOW}[+] Configuring VNC Password...${RESET}"
+                    vncpasswd
+                    ;;
+                3)
+                    log "[i] Starting desktop and VNC services..." "${YELLOW}[+] Starting desktop and VNC services...${RESET}"
+                    # Check installed desktop environments
+                    if [ -f ~/.kali-config/kali-desktop ]; then
+                        desktops=($(cat ~/.kali-config/kali-desktop))
+                        if [ ${#desktops[@]} -gt 1 ]; then
+                            log "[i] Multiple desktops found" "${CYAN}Multiple desktops found, please choose one to start:${RESET}"
+                            for i in "${!desktops[@]}"; do
+                                echo -e "${GREEN}[$((i+1))]${RESET} ${desktops[$i]}"
+                            done
+                            read -p "Enter your choice: " desktop_choice
+                            selected_desktop=${desktops[$((desktop_choice-1))]}
+                        else
+                            selected_desktop=${desktops[0]}
+                        fi
+                        log "[i] Starting VNC Service with $selected_desktop" "${YELLOW}[+] Starting VNC Service with $selected_desktop...${RESET}"
+
+                        case $selected_desktop in
+                            "kali-desktop-gnome")
+                                startx &
+                                ;;
+                            "kali-desktop-kde")
+                                startplasma-x11 &
+                                ;;
+                            "kali-desktop-xfce")
+                                startxfce4 &
+                                ;;
+                            "kali-desktop-mate")
+                                mate-session &
+                                ;;
+                            "kali-desktop-lxde")
+                                startlxde &
+                                ;;
+                            "kali-desktop-cinnamon")
+                                cinnamon-session &
+                                ;;
+                            *)
+                                log "[!] Desktop environment not recognized" "${RED}[!] Desktop environment not recognized, attempting to start it manually.${RESET}"
+                                ;;
+                        esac
+
+                        # Start VNC server
+                        vncserver
+
+                        # Check if VNC server started successfully
+                        if [ $? -ne 0 ]; then
+                            log "[!] Failed to start VNC server" "${RED}[!] Failed to start VNC server. Checking for issues...${RESET}"
+                            # Check for errors in Xorg log file
+                            if grep -q "no screens found" /var/log/Xorg.0.log; then
+                                log "[!] No screens found in Xorg log" "${RED}[!] No screens found. You may need to install or configure a virtual display like Xvfb.${RESET}"
+                            fi
+                            log "[i] Check Xorg log file for more details" "${YELLOW}[i] You can also check the log file at /var/log/Xorg.0.log for more details.${RESET}"
+                        else
+                            log "[+] VNC server started successfully" "${GREEN}[+] VNC server started successfully on display :2.${RESET}"
+                        fi
+
+                    else
+                        log "[!] No desktop environment found" "${RED}[!] No desktop environment found, please install one first.${RESET}"
+                    fi
+                    ;;
+                0)
+                    log "[i] User chose to exit from VNC Service menu" "Exiting..."
+                    exit 1
+                    ;;
+                *)
+                    log "[!] Invalid choice in VNC Service menu" "${RED}[!] Invalid choice, please try again.${RESET}"
+                    ;;
+            esac
+        done
+        break
+    else
+        log "[!] Invalid choice in main menu" "${RED}[!] Invalid choice, please try again.${RESET}"
+    fi
+done
+}
+
+# Judging Chinese or English
+CONFIG_FILE="/.kali-config/Ankali.conf"
+LANGUAGE=$(grep -v '^//' "$CONFIG_FILE" | grep -w 'LANGUAGE' | cut -d '=' -f2)
+if [ "$LANGUAGE" = "CN" ]; then
+    menu_cn
+elif [ "$LANGUAGE" = "EN" ]; then
+    menu_en
+else
+    menu_en
+fi
+
+# © Sansjtw Ankali

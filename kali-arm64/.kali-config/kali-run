@@ -1,0 +1,126 @@
+#!/bin/sh
+
+# 设置颜色
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # 没有颜色
+
+# 设置符号
+ERROR="[-]"
+SUCCESS="[+]"
+INFO="[*]"
+
+# 设置日志文件路径
+LOG_DIR="/.kali-config/log"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d').log"
+
+# 记录日志函数
+log_message() {
+    echo "$1" >> "$LOG_FILE"
+}
+
+# 读取配置文件
+CONFIG_FILE="/.kali-config/Ankali.conf"
+LANGUAGE_CONF="/.kali-config/language.conf"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    log_message "${ERROR} Configuration file $CONFIG_FILE does not exist."
+    echo -e "${RED}${ERROR} Configuration file $CONFIG_FILE does not exist.${NC}"
+    exit 1
+fi
+
+# 获取 INITIALIZATION 配置
+INITIALIZATION=$(grep '^INITIALIZATION=' "$CONFIG_FILE" | cut -d'=' -f2)
+
+log_message "${INFO} Initial value of INITIALIZATION: $INITIALIZATION"
+
+treaty_first(){
+echo "使用前请详细阅读，如果你使用此软件则默认同意以下条约(点击链接跳转):
+Please read it carefully before using it. If you use this software, you agree to the following treaties by default(Click the link to jump):
+- 免责声明: https://gitee.com/sansjtw/Ankali-app/blob/master/免责声明.md
+
+- 隐私条约: https://gitee.com/sansjtw/Ankali-app/blob/master/隐私条约.md
+
+- Disclaimer: https://github.com/sansjtw1/Ankali-app/blob/master/Disclaimer.md
+
+- Privacy Policy: https://github.com/sansjtw1/Ankali-app/blob/master/Privacy%20Policy.md
+"
+echo
+echo "我已阅读，回车继续"
+echo "I've read it. Go back and continue."
+read var1 var2 var3 || {
+    echo "Error: Not enough input provided."
+    exit 1
+}
+}
+
+if [ "$INITIALIZATION" = "false" ] || [ -z "$INITIALIZATION" ]; then
+    treaty_first
+    while true; do
+        log_message "${INFO} INITIALIZATION is false or unknown. Asking user for language selection."
+
+        echo -e "${YELLOW}${INFO} Please select language:${NC}"
+        echo "y) English"
+        echo "n) 简体中文"
+        read -p "Choose (y/n): " choice
+
+        if [ "$choice" = "y" ]; then
+            log_message "${SUCCESS} User selected English."
+            echo -e "${GREEN}${SUCCESS} User selected English.${NC}"
+            echo "LANG=en_US.UTF-8" > "$LANGUAGE_CONF"
+            echo "LANGUAGE=en_US:en" >> "$LANGUAGE_CONF"
+            log_message "${INFO} Language configuration written to $LANGUAGE_CONF."
+
+            # 更新 Ankali.conf 中的 INITIALIZATION 和 LANGUAGE
+            sed -i 's/^INITIALIZATION=false/INITIALIZATION=true/' "$CONFIG_FILE"
+            sed -i 's/^LANGUAGE=.*/LANGUAGE=EN/' "$CONFIG_FILE" || echo "LANGUAGE=EN" >> "$CONFIG_FILE"
+            log_message "${SUCCESS} INITIALIZATION set to true, LANGUAGE set to EN."
+
+            # 执行英文脚本
+            /.kali-config/kali_conf
+            break
+        elif [ "$choice" = "n" ]; then
+            log_message "${SUCCESS} User selected Chinese."
+            echo -e "${GREEN}${SUCCESS} User selected Chinese.${NC}"
+            echo "LANG=zh_CN.UTF-8" > "$LANGUAGE_CONF"
+            echo "LANGUAGE=zh_CN:zh:en_US:en" >> "$LANGUAGE_CONF"
+            log_message "${INFO} Language configuration written to $LANGUAGE_CONF."
+
+            # 更新 Ankali.conf 中的 INITIALIZATION 和 LANGUAGE
+            sed -i 's/^INITIALIZATION=false/INITIALIZATION=true/' "$CONFIG_FILE"
+            sed -i 's/^LANGUAGE=.*/LANGUAGE=CN/' "$CONFIG_FILE" || echo "LANGUAGE=CN" >> "$CONFIG_FILE"
+            log_message "${SUCCESS} INITIALIZATION set to true, LANGUAGE set to CN."
+
+            # 执行中文脚本
+            /.kali-config/kali_conf_cn
+            break
+        else
+            log_message "${ERROR} Invalid selection: $choice. Asking user to select again."
+            echo -e "${RED}${ERROR} Invalid selection. Please try again.${NC}"
+        fi
+    done
+elif [ "$INITIALIZATION" = "true" ]; then
+    LANGUAGE=$(grep '^LANGUAGE=' "$CONFIG_FILE" | cut -d'=' -f2)
+    log_message "${INFO} INITIALIZATION is true, LANGUAGE: $LANGUAGE"
+
+    if [ "$LANGUAGE" = "EN" ]; then
+        log_message "${INFO} Executing English script: /.kali-config/kali_conf"
+        /.kali-config/kali_conf
+    elif [ "$LANGUAGE" = "CN" ]; then
+        log_message "${INFO} Executing Chinese script: /.kali-config/kali_conf_cn"
+        /.kali-config/kali_conf_cn
+    else
+        log_message "${ERROR} LANGUAGE is unknown or missing. Resetting INITIALIZATION to false."
+        sed -i 's/^INITIALIZATION=true/INITIALIZATION=false/' "$CONFIG_FILE"
+        exec "$0"
+    fi
+else
+    log_message "${ERROR} INITIALIZATION configuration is invalid. Resetting to false."
+    sed -i 's/^INITIALIZATION=.*/INITIALIZATION=false/' "$CONFIG_FILE" || echo "INITIALIZATION=false" >> "$CONFIG_FILE"
+    exec "$0"
+fi
+
+# ©Sansjtw Ankali
+# Give yourself a gift for being 16 years old.🎁٩(^ᴗ^)۶

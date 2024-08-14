@@ -1,0 +1,170 @@
+#!/bin/bash
+
+# Set log file path
+LOG_DIR="/.kali-config/log"
+LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d').log"
+
+# Create log directory
+mkdir -p "$LOG_DIR"
+
+# Define log function
+log() {
+    echo -e "$1" >> "$LOG_FILE"
+    echo -e "$2" # Display content in terminal
+}
+
+# Color settings
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+NC='\033[0m' # No color
+
+# Read configuration file and ignore comments
+CONF_FILE="/.kali-config/Ankali.conf"
+while read -r line; do
+    [[ "$line" =~ ^//.*$ ]] && continue  # Ignore comment lines
+    eval "$line"
+done < <(grep -v '^//' "$CONF_FILE")
+
+# Check NEOFETCH configuration
+if [ "$NEOFETCH" == "true" ]; then
+    log "[*] NEOFETCH is true, running /.kali-config/neofetch" "${YELLOW}[*] NEOFETCH is true, running NEOFETCH...${NC}"
+    /.kali-config/neofetch
+else
+    log "[+] NEOFETCH is false, continuing script" "${GREEN}[+] NEOFETCH is false, continuing script...${NC}"
+fi
+
+
+# Check NOOPENMENU configuration
+if [ "$NOOPENMENU" == "true" ]; then
+    log "[*] NOOPENMENU is true, checking NEOFETCH" "${YELLOW}[*] NOOPENMENU is true, checking NEOFETCH...${NC}"
+else
+    log "[+] NOOPENMENU is false, exiting after checking NEOFETCH" "${GREEN}[+] NOOPENMENU is false, exiting after checking NEOFETCH...${NC}"
+    zsh
+fi
+# Check OPTIMIZE configuration
+if [ "$OPTIMIZE" == "false" ]; then
+    if [ "$LANGUAGE" == "CN" ]; then
+        log "[*] LANGUAGE is set to CN, running /.kali-config/.profile" "${YELLOW}[*] LANGUAGE is set to CN, running .profile...${NC}"
+        source "/.kali-config/.profile"
+        sed -i 's/^OPTIMIZE=false/OPTIMIZE=true/' "$CONF_FILE"
+        sed -i 's/^DEPLOY=false/DEPLOY=true/' "$CONF_FILE"
+        log "[+] OPTIMIZE and DEPLOY set to true, entering Function Menu" "${GREEN}[+] OPTIMIZE and DEPLOY set to true, entering Function Menu...${NC}"
+        goto_function_menu=true
+    else
+        log "[*] LANGUAGE is set to EN, entering System Configuration" "${YELLOW}[*] LANGUAGE is set to EN, entering System Configuration...${NC}"
+    fi
+else
+    log "[+] OPTIMIZE is already true, entering Function Menu" "${GREEN}[+] OPTIMIZE is already true, entering Function Menu...${NC}"
+    goto_function_menu=true
+fi
+
+# If LANGUAGE is CN or OPTIMIZE is true, skip system configuration and enter Function Menu
+if [ "$goto_function_menu" == true ]; then
+    goto_function_menu=false  # Reset flag
+    # Function Menu code here...
+else
+    # System configuration
+    if [ "$DEPLOY" == "true" ]; then
+        log "[+] DEPLOY is true, entering Function Menu" "${GREEN}[+] DEPLOY is true, entering Function Menu...${NC}"
+        # Enter Function Menu
+    else
+        log "[!] DEPLOY is false, please answer the following questions" "${RED}[!] DEPLOY is false, please answer the following questions...${NC}"
+        echo -e "${BLUE}You can press Enter to use the default configuration.${NC}"
+
+        # Configure DNS server
+while true; do
+    read -p "[*] Please enter DNS server IP (default: 8.8.8.8): " dns_ip
+    if [[ -z "$dns_ip" ]]; then
+        dns_ip="8.8.8.8"
+    fi
+    if [[ $dns_ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "nameserver $dns_ip" > /etc/resolv.conf
+        log "[+] DNS server configured as: $dns_ip" "${GREEN}[+] DNS server configured as: $dns_ip${NC}"
+        break
+    else
+        log "[!] Invalid IP address, please try again" "${RED}[!] Invalid IP address, please try again...${NC}"
+    fi
+done
+
+# Configure mirror source
+read -p "[*] Please enter mirror source URL (default: deb http://http.kali.org/kali kali-rolling main non-free contrib): " mirror
+if [[ -z "$mirror" ]]; then
+    mirror="deb http://http.kali.org/kali kali-rolling main non-free contrib"
+fi
+
+        echo "$mirror" > /etc/apt/sources.list
+        apt update && apt upgrade -y && apt install wget curl whiptail
+        log "[+] Mirror source configured as: $mirror" "${GREEN}[+] Mirror source configured as: $mirror${NC}"
+
+        # Update OPTIMIZE configuration to true
+        sed -i 's/^OPTIMIZE=false/OPTIMIZE=true/' "$CONF_FILE"
+        log "[+] OPTIMIZE set to true, entering Function Menu" "${GREEN}[+] OPTIMIZE set to true, entering Function Menu...${NC}"
+    fi
+fi
+
+# Function Menu
+while true; do
+    echo -e "\n${BLUE}========= Function Menu =========${NC}"
+    echo -e "${GREEN}[1] Enter Kali CLI${NC}"
+    echo -e "${GREEN}[2] Set root account password${NC}"
+    echo -e "${GREEN}[3] Configure system language${NC}"
+    echo -e "${GREEN}[4] Graphical Desktop GUI and VNC Service${NC}"
+    echo -e "${GREEN}[5] Special Key${NC}"
+    echo -e "${GREEN}[6] Start Tome${NC}"
+    echo -e "${GREEN}[7] Start Katoolin${NC}"
+    echo -e "${GREEN}[8] Settings${NC}"
+    echo -e "${GREEN}[9] about${NC}"
+    echo -e "${BLUE}============================${NC}"
+    read -p "$(echo -e ${YELLOW}[*] Please enter the number of the function you want to use: ${NC})" choice
+
+    case "$choice" in
+        1)
+            log "[+] Entering Kali CLI"
+            break
+            zsh
+            ;;
+        2)
+            log "[+] Setting root account password"
+            passwd root
+            ;;
+        3)
+            log "[+] Configuring system language"
+            /.kali-config/linux/language
+            ;;
+        4)
+            log "[+] Configuring VNC Service"
+            /.kali-config/linux/VNC_server
+            ;;
+        5)
+            log "[+] Enter special key"
+            /.kali-config/linux/key
+            ;;
+        6)
+            log "[+] Start tome"
+            pkg install -y curl ; bash -c "$(curl -L gitee.com/mo2/linux/raw/2/2)"
+            ;;
+        7)
+            log "[+] start katoolin"
+            apt update
+            apt install -y git python2
+            git clone https://github.com/LionSec/katoolin.git
+            cd katoolin
+            python2 katoolin.py
+            ;;
+        8)
+            log "[+] Enter special key"
+            /.kali-config/linux/setup
+            ;;
+        9)
+            log "[+] Enter special about"
+            /.kali-config/linux/about
+            ;;
+        *)
+            log "[!] Invalid selection, please try again"
+            ;;
+    esac
+done
+
+# © sansjtw Ankali

@@ -1,0 +1,80 @@
+#!/bin/bash
+# To really use Ankali, you must learn these things.
+
+# 等你知道这些，你才会真正的使用这款app了♪(^∇^*)
+
+CONFIG_FILE="/.kali-config/Ankali.conf"
+
+LANGUAGE=$(grep -v '^//' "$CONFIG_FILE" | grep -w 'LANGUAGE' | cut -d '=' -f2)
+
+kex_cn(){
+echo "
+音量减少键（Vol-Dn）映射
+音量减-Space: Control-@（NUL）
+音量减-A..Z: Control-A..Z
+音量减-5: Control-]
+音量减-6: Control-^
+音量减-7: Control-_
+音量减-9: F11
+音量减-0: F12
+
+音量增加键（Vol-Up）映射
+音量加-1..9: F1-F9
+音量加-0: F10
+音量加-W: Up（上箭头）
+音量加-A: Left（左箭头）
+音量加-S: Down（下箭头）
+音量加-D: Right（右箭头）
+音量加-P: PageUp（向上翻页）
+音量加-N: PageDown（向下翻页）
+音量加-T: Tab（制表键）
+音量加-L: |（管道符号）
+音量加-U: _（下划线）
+音量加-E: Control-[（ESC键）
+音量加-X: Delete（删除键）
+音量加-I: Insert（插入键）
+音量加-H: Home（起始键）
+音量加-F: End（末尾键）
+音量加-.: Control-\（反斜杠）
+"
+}
+kex_en(){
+echo "
+Vol-Dn Mapping
+Vol-Dn-Space: Control-@（NUL）
+Vol-Dn-A..Z: Control-A..Z
+Vol-Dn-5: Control-]
+Vol-Dn-6: Control-^
+Vol-Dn-7: Control-_
+Vol-Dn-9: F11
+Vol-Dn-0: F12
+
+Vol-Up Mapping
+Vol-Up-1..9: F1-F9
+Vol-Up-0: F10
+Vol-Up-W: Up
+Vol-Up-A: Left
+Vol-Up-S: Down
+Vol-Up-D: Right
+Vol-Up-P: PageUp
+Vol-Up-N: PageDown
+Vol-Up-T: Tab
+Vol-Up-L: |（pipe）
+Vol-Up-U: _（underscore）
+Vol-Up-E: Control-[ (ESC)
+Vol-Up-X: Delete
+Vol-Up-I: Insert
+Vol-Up-H: Home
+Vol-Up-F: End
+Vol-Up-.: Control-\
+"
+}
+
+# 判断 LANGUAGE 的值
+if [ "$LANGUAGE" = "CN" ]; then
+    kex_cn
+elif [ "$LANGUAGE" = "EN" ]; then
+    kex_en
+else
+    kex_en
+fi

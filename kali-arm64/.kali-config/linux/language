@@ -1,0 +1,171 @@
+#!/bin/bash
+
+# 伙计，你是哪个国家的（•ч•）?
+# 定義語言數組: 語言代碼 本國語言名稱 (英文名稱)
+languages=(
+    "zh_CN.UTF-8 简体中文 (Simplified Chinese)"
+    "zh_TW.UTF-8 繁體中文 (Traditional Chinese)"
+    "en_US.UTF-8 English (English)"
+    "de_DE.UTF-8 Deutsch (German)"
+    "fr_FR.UTF-8 Français (French)"
+    "es_ES.UTF-8 Español (Spanish)"
+    "it_IT.UTF-8 Italiano (Italian)"
+    "ja_JP.UTF-8 日本語 (Japanese)"
+    "ko_KR.UTF-8 한국어 (Korean)"
+    "ru_RU.UTF-8 Русский (Russian)"
+    "pt_PT.UTF-8 Português (Portuguese)"
+    "ar_SA.UTF-8 العربية (Arabic)"
+    "hi_IN.UTF-8 हिंदी (Hindi)"
+    "tr_TR.UTF-8 Türkçe (Turkish)"
+    "nl_NL.UTF-8 Nederlands (Dutch)"
+    "pl_PL.UTF-8 Polski (Polish)"
+    "sv_SE.UTF-8 Svenska (Swedish)"
+    "da_DK.UTF-8 Dansk (Danish)"
+    "fi_FI.UTF-8 Suomi (Finnish)"
+    "no_NO.UTF-8 Norsk (Norwegian)"
+    "cs_CZ.UTF-8 Čeština (Czech)"
+    "el_GR.UTF-8 Ελληνικά (Greek)"
+    "he_IL.UTF-8 עברית (Hebrew)"
+    "hu_HU.UTF-8 Magyar (Hungarian)"
+    "ro_RO.UTF-8 Română (Romanian)"
+    "sk_SK.UTF-8 Slovenčina (Slovak)"
+    "bg_BG.UTF-8 Български (Bulgarian)"
+    "uk_UA.UTF-8 Українська (Ukrainian)"
+    "vi_VN.UTF-8 Tiếng Việt (Vietnamese)"
+    "th_TH.UTF-8 ไทย (Thai)"
+    "id_ID.UTF-8 Bahasa Indonesia (Indonesian)"
+    "ms_MY.UTF-8 Bahasa Melayu (Malay)"
+    "fa_IR.UTF-8 فارسی (Persian)"
+    "sr_RS.UTF-8 Српски (Serbian)"
+    "hr_HR.UTF-8 Hrvatski (Croatian)"
+    "lt_LT.UTF-8 Lietuvių (Lithuanian)"
+    "lv_LV.UTF-8 Latviešu (Latvian)"
+    "et_EE.UTF-8 Eesti (Estonian)"
+    "sl_SI.UTF-8 Slovenščina (Slovenian)"
+    "is_IS.UTF-8 Íslenska (Icelandic)"
+    "mt_MT.UTF-8 Malti (Maltese)"
+)
+
+# Set log file path
+LOG_DIR="/.kali-config/log"
+LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d').log"
+
+# Create log directory
+mkdir -p "$LOG_DIR"
+
+# Define log function
+log() {
+    echo -e "$1" >> "$LOG_FILE" # Log file output in English
+    echo -e "$2" # Terminal display content
+}
+
+languages_cntw(){
+
+# 顯示語言選項菜單
+log "Displaying language selection menu" "顯示語言選項菜單"
+echo "請選擇語言："
+select lang in "${languages[@]}"; do
+    if [[ -n "$lang" ]]; then
+        log "User selected language: $lang" "你選擇了: $lang"
+        break
+    else
+        log "Invalid selection, user prompted to try again" "無效的選擇，請重試。"
+    fi
+done
+
+# 提取語言代碼
+lang_code=$(echo "$lang" | awk '{print $1}')
+log "Extracted language code: $lang_code" "提取語言代碼: $lang_code"
+
+# 備份 /etc/locale.gen 文件
+log "Backing up /etc/locale.gen to /etc/locale.gen.bak" "備份 /etc/locale.gen 文件"
+cp /etc/locale.gen /etc/locale.gen.bak
+
+# 注釋掉原有的未注釋的語言代碼
+log "Commenting out existing uncommented language codes in /etc/locale.gen" "注釋掉原有的未注釋的語言代碼"
+sed -i 's/^\([^#].*\)/#\1/' /etc/locale.gen
+
+# 啟用所選語言
+log "Enabling selected language: $lang_code" "啟用所選語言: $lang_code"
+sed -i "s/^# *$lang_code/$lang_code/" /etc/locale.gen
+
+# 生成所選語言的 locale
+log "Generating locale for selected language: $lang_code" "生成所選語言的 locale"
+locale-gen
+
+# 更新默認語言配置
+log "Updating default language configuration" "更新默認語言配置"
+echo "export LANG=$lang_code" > "/.kali-config/language.conf"
+echo "export LANGUAGE=${lang_code%%.*}:${lang_code%%.*}:en_US:en" >> "/.kali-config/language.conf"
+
+# 應用語言配置
+log "Applying language configuration: LANG=$lang_code" "應用語言配置: LANG=$lang_code"
+update-locale LANG=$lang_code
+
+# 提示用戶重啟系統
+log "Language configuration updated, user prompted to reboot" "語言配置已更新，請重啟系統以應用更改。"
+echo "可以使用以下命令手動重啟: sudo reboot"
+}
+
+
+languages_en(){
+# Display language selection menu
+log "Displaying language selection menu" "Displaying language selection menu"
+echo "Please select a language:"
+select lang in "${languages[@]}"; do
+    if [[ -n "$lang" ]]; then
+        log "User selected language: $lang" "You selected: $lang"
+        break
+    else
+        log "Invalid selection, user prompted to try again" "Invalid selection, please try again."
+    fi
+done
+
+# Extract language code
+lang_code=$(echo "$lang" | awk '{print $1}')
+log "Extracted language code: $lang_code" "Extracted language code: $lang_code"
+
+# Backup /etc/locale.gen file
+log "Backing up /etc/locale.gen to /etc/locale.gen.bak" "Backing up /etc/locale.gen file"
+cp /etc/locale.gen /etc/locale.gen.bak
+
+# Comment out existing uncommented language codes
+log "Commenting out existing uncommented language codes in /etc/locale.gen" "Commenting out existing uncommented language codes"
+sed -i 's/^\([^#].*\)/#\1/' /etc/locale.gen
+
+# Enable selected language
+log "Enabling selected language: $lang_code" "Enabling selected language: $lang_code"
+sed -i "s/^# *$lang_code/$lang_code/" /etc/locale.gen
+
+# Generate locale for selected language
+log "Generating locale for selected language: $lang_code" "Generating locale for selected language: $lang_code"
+locale-gen
+
+# Update default language configuration
+log "Updating default language configuration" "Updating default language configuration"
+echo "export LANG=$lang_code" > "/.kali-config/language.conf"
+echo "export LANGUAGE=${lang_code%%.*}:${lang_code%%.*}:en_US:en" >> "/.kali-config/language.conf"
+
+# Apply language configuration
+log "Applying language configuration: LANG=$lang_code" "Applying language configuration: LANG=$lang_code"
+update-locale LANG=$lang_code
+
+# Prompt user to reboot
+log "Language configuration updated, user prompted to reboot" "Language configuration updated, please reboot the system to apply changes."
+echo "You can manually reboot using the following command: sudo reboot"
+}
+
+# Read configuration file
+CONFIG_FILE="/.kali-config/Ankali.conf"
+
+LANGUAGE=$(grep -v '^//' "$CONFIG_FILE" | grep -w 'LANGUAGE' | cut -d '=' -f2)
+#Judgement value
+if [ "$LANGUAGE" = "CN" ]; then
+    languages_cntw
+elif [ "$LANGUAGE" = "EN" ]; then
+    languages_en
+else
+    languages_en
+fi
+
+# Sansjtw Ankali
