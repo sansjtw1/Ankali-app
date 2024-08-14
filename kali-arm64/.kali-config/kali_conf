@@ -122,8 +122,8 @@ while true; do
     case "$choice" in
         1)
             log "[+] Entering Kali CLI"
-            break
             zsh
+            break
             ;;
         2)
             log "[+] Setting root account password"
