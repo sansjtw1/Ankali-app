@@ -73,7 +73,7 @@ kali-test
 
 ## Additional Feedback
 Perhaps your question is on Wikipedia, you can go and check:
-https://github.com/sansjtw1/Ankali-app.wiki
+https://github.com/sansjtw1/Ankali-app/wiki
 
 You can ask your questions directly on the GitHub issue page, or contact me via email:
 - sansjtw@163.com

@@ -76,7 +76,7 @@ kali-test
 
 ## 更多反馈
 也许Wiki上有你的问题，你可以去看看:
-https://github.com/sansjtw1/Ankali-app.wiki
+https://github.com/sansjtw1/Ankali-app/wiki
 
 你可以直接在Github的issue上询问你的问题，也可以通过我的电子邮箱联系我:
 - sansjtw@163.com
