@@ -14,6 +14,13 @@ Ankali does not depend on other applications like Termux because it is an Androi
 
 ## Download AnKali APK
 
+[Google drive](https://drive.google.com/drive/folders/1REO9a_jtFE65XNc5nu0sY4mTp_pVH5Qh?usp=drive_link)
+
+[GitHub Download](https://github.com/sansjtw1/Ankali-app/releases)
+
+[123pan](https://www.123pan.com/s/QSZRVv-rGH43)
+
+[baidupan](https://pan.baidu.com/s/1m6pYDJavd45Cler6B9DkbA ) 提取码:1234
 ## About the Application Source Code
 
 Interested in the app source code? The program actually runs scripts within TermOne Plus, and our repository only stores the script files and configuration logic files.
