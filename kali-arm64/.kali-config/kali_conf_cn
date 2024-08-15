@@ -14,10 +14,13 @@ log() {
 }
 
 # 颜色设置
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[1;34m'
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+YELLOW="\033[0;33m"
+BLUE="\033[0;34m"
+CYAN="\033[0;36m"
+WHITE="\033[1;37m"
+RESET="\033[0m"
 NC='\033[0m' # 无颜色
 
 # 读取配置文件并忽略注释
@@ -30,6 +33,7 @@ done < <(grep -v '^//' "$CONF_FILE")
 # 检查 NEOFETCH 配置
 if [ "$NEOFETCH" == "true" ]; then
     log "[*] NEOFETCH is true, running /.kali-config/neofetch" "${YELLOW}[*] 正在运行 NEOFETCH...${NC}"
+    clear
     /.kali-config/neofetch
 else
     log "[+] NEOFETCH is false, continuing script" "${GREEN}[+] NEOFETCH 为 false，继续执行脚本...${NC}"
@@ -37,9 +41,9 @@ fi
 
 # 检查 NOOPENMENU 配置
 if [ "$NOOPENMENU" == "true" ]; then
-    log "[*] NOOPENMENU is true, checking NEOFETCH" "${YELLOW}[*] NOOPENMENU 为 true，正在检查 NEOFETCH...${NC}"
+    log "[*] NOOPENMENU is true, checking NEOFETCH"
 else
-    log "[+] NOOPENMENU is false, exiting after checking NEOFETCH" "${GREEN}[+] NOOPENMENU 为 false，退出前检查 NEOFETCH...${NC}"
+    log "[+] NOOPENMENU is false, exiting after checking NEOFETCH" 
     zsh
 fi
 
@@ -50,13 +54,13 @@ if [ "$OPTIMIZE" == "false" ]; then
         source "/.kali-config/.profile"
         sed -i 's/^OPTIMIZE=false/OPTIMIZE=true/' "$CONF_FILE"
         sed -i 's/^DEPLOY=false/DEPLOY=true/' "$CONF_FILE"
-        log "[+] OPTIMIZE and DEPLOY set to true, entering Function Menu" "${GREEN}[+] OPTIMIZE 和 DEPLOY 已设置为 true，进入功能菜单...${NC}"
+        log "[+] OPTIMIZE and DEPLOY set to true, entering Function Menu"
         goto_function_menu=true
     else
         log "[*] LANGUAGE is set to EN, entering System Configuration" "${YELLOW}[*] 语言设置为 EN，进入系统配置...${NC}"
     fi
 else
-    log "[+] OPTIMIZE is already true, entering Function Menu" "${GREEN}[+] OPTIMIZE 已经为 true，进入功能菜单...${NC}"
+    log "[+] OPTIMIZE is already true, entering Function Menu"
     goto_function_menu=true
 fi
 
@@ -99,12 +103,33 @@ else
 
         # 更新 OPTIMIZE 配置为 true
         sed -i 's/^OPTIMIZE=false/OPTIMIZE=true/' "$CONF_FILE"
-        log "[+] OPTIMIZE set to true, entering Function Menu" "${GREEN}[+] OPTIMIZE 已设置为 true，进入功能菜单...${NC}"
+        log "[+] OPTIMIZE set to true, entering Function Menu"
     fi
 fi
 
+kali_titles(){
+if [ "$TITLES" == "true" ]; then
+log "[+]TITLES is true to display titles."
+echo -e "${RED} __________________________________________"
+echo -e "|    ${GREEN}_            _  __    _    _     ___  ${RED}|"
+echo -e "|   ${GREEN}/ \   _ __   | |/ /   / \  | |   |_ _| ${RED}|"
+echo -e "|  ${GREEN}/ _ \ | '_ \  | ' /   / _ \ | |    | |  ${RED}|"
+echo -e "| ${GREEN}/ ___ \| | | | | . \  / ___ \| |___ | |  ${RED}|"
+echo -e "|${GREEN}/_/   \_\_| |_| |_|\_\/_/   \_\_____|___| ${RED}|"
+echo -e "|${CYAN}++++++++++++++++++${YELLOW}An kail${CYAN}+++++++++++++++++${RED}|"
+echo -e "|                                          |"
+echo -e "| ${WHITE}https://github.com/sansjtw1/Ankali-app   ${RED}|"
+echo -e "| ${WHITE}https://gitee.com/sansjtw/Ankali-app     ${RED}|"
+echo -e "|                                          |"
+echo -e " ------------------------------------------${RESET}"
+else
+log "[+]TITLES is false, and the title is not displayed."
+fi
+}
+
 # 功能菜单
 while true; do
+    kali_titles
     echo -e "\n${BLUE}========= 功能菜单 =========${NC}"
     echo -e "${GREEN}[1] 进入 Kali CLI${NC}"
     echo -e "${GREEN}[2] 设置 root 账户密码${NC}"
@@ -121,6 +146,7 @@ while true; do
     case "$choice" in
         1)
             log "[+] Entering Kali CLI"
+            echo "加载中..."
             zsh
             break
             ;;

@@ -38,6 +38,7 @@ NOOPENMENU=$(get_config_value "NOOPENMENU")
 NEOFETCH=$(get_config_value "NEOFETCH")
 OPTIMIZE=$(get_config_value "OPTIMIZE")
 DEPLOY=$(get_config_value "DEPLOY")
+TITLES=$(get_config_value "TITLES")
 
 # 将语言设置转换为对应的显示文本
 YYWT_TT(){
@@ -45,10 +46,12 @@ if [[ "$LANGUAGE" == "CN" ]]; then
     DISPLAY_LANGUAGE="中文"
     DISPLAY_SELF_START=$( [[ "$NOOPENMENU" == "true" ]] && echo "开启" || echo "关闭" )
     DISPLAY_NEFOFETCH=$( [[ "$NEOFETCH" == "true" ]] && echo "开启" || echo "关闭" )
+    DISPLAY_TITLES=$( [[ "$TITLES" == "true" ]] && echo "开启" || echo "关闭" )
 else
     DISPLAY_LANGUAGE="English"
     DISPLAY_SELF_START=$( [[ "$NOOPENMENU" == "true" ]] && echo "Enabled" || echo "Disabled" )
     DISPLAY_NEFOFETCH=$( [[ "$NEOFETCH" == "true" ]] && echo "Enabled" || echo "Disabled" )
+    DISPLAY_TITLES=$( [[ "$TITLES" == "true" ]] && echo "Enabled" || echo "Disabled" )
 fi
 }
 YYWT_TT
@@ -115,7 +118,8 @@ feature_menu_cn() {
         echo -e "${GREEN}[1]${RESET} 自启动功能菜单: ${DISPLAY_SELF_START}"
         echo -e "${GREEN}[2]${RESET} 功能菜单语言: ${DISPLAY_LANGUAGE}"
         echo -e "${GREEN}[3]${RESET} 启动Neofetch: ${DISPLAY_NEFOFETCH}"
-        echo -e "${GREEN}[4]${RESET} 退出"
+        echo -e "${GREEN}[4]${RESET} 显示标题: ${DISPLAY_TITLES}"
+        echo -e "${GREEN}[5]${RESET} 退出"
         read -p "选择一个选项 [1-4]: " option
 
         case $option in
@@ -153,6 +157,15 @@ feature_menu_cn() {
                 YYWT_TT
                 ;;
             4)
+                if [[ "$TITLES" == "true" ]]; then
+                    TITLES="false"
+                else
+                    TITLES="true"
+                fi
+                sed -i "s/^TITLES=.*/TITLES=$TITLES/" "$CONFIG_FILE"
+                YYWT_TT
+                ;;
+            5)
                 exit 1
                 ;;
             *)
@@ -226,7 +239,8 @@ feature_menu_en() {
         echo -e "${GREEN}[1]${RESET} Auto-start feature menu: ${DISPLAY_SELF_START}"
         echo -e "${GREEN}[2]${RESET} Feature menu language: ${DISPLAY_LANGUAGE}"
         echo -e "${GREEN}[3]${RESET} Start Neofetch: ${DISPLAY_NEFOFETCH}"
-        echo -e "${GREEN}[4]${RESET} Exit"
+        echo -e "${GREEN}[4]${RESET} Show title: ${DISPLAY_TITLES}"
+        echo -e "${GREEN}[5]${RESET} Exit"
         read -p "Choose an option [1-4]: " option
 
         case $option in
@@ -270,6 +284,15 @@ feature_menu_en() {
                 YYWT_TT
                 ;;
             4)
+                if [[ "$TITLES" == "true" ]]; then
+                    TITLES="false"
+                else
+                    TITLES="true"
+                fi
+                sed -i "s/^TITLES=.*/TITLES=$TITLES/" "$CONFIG_FILE"
+                YYWT_TT
+                ;;
+            5)
                 log "Exiting feature menu" "${YELLOW}Exiting feature menu...${RESET}"
                 exit 1
                 ;;
