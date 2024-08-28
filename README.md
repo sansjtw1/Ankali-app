@@ -47,7 +47,7 @@ Interested in the app source code? The program actually runs scripts within Term
 
 - **App Icon Source**: [Wikimedia Commons File:Kali-dragon-icon.svg](https://commons.m.wikimedia.org/wiki/File:Kali-dragon-icon.svg)
 - **Android Terminal Emulator Based On**: [TermOne Plus](https://termoneplus.com/)
-- **Referenced Some Files from Tome**: [Tome](https://github.com/2moe/tmoe)
+- **Referenced Some Files from Tmoe**: [Tome](https://github.com/2moe/tmoe)
 - **Precompiled PRoot Program**: [build-proot-android](https://github.com/green-green-avk/build-proot-android)
 
 ## Ankali Debug Mode

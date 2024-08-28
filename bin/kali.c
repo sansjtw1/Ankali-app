@@ -84,10 +84,6 @@ int main() {
     snprintf(command, sizeof(command), "chmod 777 -R %s/.kali-config", kali_dir);
     if (run_command(command)) return 1;
 
-    // Add language configuration to .zshrc
-    snprintf(command, sizeof(command), "grep -q \"source /.kali-config/language.conf\" %s/root/.zshrc || echo \"source /.kali-config/language.conf\" >> %s/root/.zshrc", kali_dir, kali_dir);
-    if (run_command(command)) return 1;
-
     // Run proot command
     snprintf(command, sizeof(command), 
              "%s --link2symlink -0 -r %s -b /dev -b /proc -b %s/home:/dev/shm -w /root /usr/bin/env -i HOME=/root PATH=/usr/local/sbin:/usr/local/bin:/bin:/usr/bin:/sbin:/usr/sbin TERM=$TERM /.kali-config/kali-run", 

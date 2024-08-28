@@ -44,7 +44,9 @@ if [ "$NOOPENMENU" == "true" ]; then
     log "[*] NOOPENMENU is true, checking NEOFETCH"
 else
     log "[+] NOOPENMENU is false, exiting after checking NEOFETCH" 
-    zsh
+    echo "加载中..."
+    clear
+    zsh -l
 fi
 
 # 检查 OPTIMIZE 配置
@@ -56,6 +58,7 @@ if [ "$OPTIMIZE" == "false" ]; then
         sed -i 's/^DEPLOY=false/DEPLOY=true/' "$CONF_FILE"
         log "[+] OPTIMIZE and DEPLOY set to true, entering Function Menu"
         goto_function_menu=true
+        apt install kali-linux-core -y
     else
         log "[*] LANGUAGE is set to EN, entering System Configuration" "${YELLOW}[*] 语言设置为 EN，进入系统配置...${NC}"
     fi
@@ -98,7 +101,7 @@ else
             mirror="deb http://http.kali.org/kali kali-rolling main non-free contrib"
         fi
         echo "$mirror" > /etc/apt/sources.list
-        apt update && apt upgrade -y && apt install wget curl whiptail
+        apt update && apt upgrade -y && apt install wget curl whiptail -y && apt install kali-linux-core -y
         log "[+] Mirror source configured as: $mirror" "${GREEN}[+] 镜像源已配置为: $mirror${NC}"
 
         # 更新 OPTIMIZE 配置为 true
@@ -106,6 +109,52 @@ else
         log "[+] OPTIMIZE set to true, entering Function Menu"
     fi
 fi
+
+kali_language(){
+if ! grep -q "source /.kali-config/language.conf" $KALI_DIR/root/.zshrc; then
+    echo "" >> $KALI_DIR/root/.zshrc
+    echo "source /.kali-config/language.conf" >> $KALI_DIR/root/.zshrc
+fi
+}
+
+browser_repair(){
+echo "开始修复"
+cp /.kali-config/desktop/applications/chromium-no-sandbox.desktop ./
+
+# 检查复制是否成功
+if [ $? -eq 0 ]; then
+    echo "Copy succeeded."
+    chmod +x ./chromium-no-sandbox.desktop
+    update-desktop-database ./chromium-no-sandbox.desktop
+else
+    echo "Copy failed." >&2
+    exit 1
+fi
+
+# 复制 chromium-no-sandbox.desktop 到 /usr/share/applications/
+sudo cp chromium-no-sandbox.desktop /usr/share/applications/
+
+# 检查复制是否成功
+if [ $? -eq 0 ]; then
+    echo "Copy succeeded."
+    chmod +x /usr/share/applications/chromium-no-sandbox.desktop
+else
+    echo "Copy failed." >&2
+    exit 1
+fi
+
+# 将 chromium-no-sandbox.desktop 设置为默认浏览器
+xdg-settings set default-web-browser chromium-no-sandbox.desktop
+
+# 检查是否设置成功
+if [ $? -eq 0 ]; then
+    echo "chromium-no-sandbox 已设置为默认浏览器。"
+    Repair_completed="true"
+else
+    echo "无法将 chromium-no-sandbox 设置为默认浏览器。" >&2
+    exit 1
+fi
+}
 
 kali_titles(){
 if [ "$TITLES" == "true" ]; then
@@ -136,18 +185,28 @@ while true; do
     echo -e "${GREEN}[3] 配置系统语言${NC}"
     echo -e "${GREEN}[4] 图形桌面 GUI 与 VNC 服务${NC}"
     echo -e "${GREEN}[5] 特殊键${NC}"
-    echo -e "${GREEN}[6] 启动Tome工具${NC}"
+    echo -e "${GREEN}[6] 启动tmoe工具${NC}"
     echo -e "${GREEN}[7] 启动katoolin工具${NC}"
     echo -e "${GREEN}[8] 设置${NC}"
     echo -e "${GREEN}[9] 关于 AnKali${NC}"
+
+    # 检查 XDG_CURRENT_DESKTOP 是否有值
+    if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+        echo -e "${GREEN}[10] 修复卧底模式${NC}"
+        if [ -e /bin/chromium ]; then
+            echo -e "${GREEN}[11] 修复chromium浏览器${NC}"
+        fi
+    fi
+    echo -e "${GREEN}\n[99] 安装最基本默认的工具集${NC}"
     echo -e "${BLUE}============================${NC}"
     read -p "$(echo -e ${YELLOW}[*] 请输入对应功能的数字编号: ${NC})" choice
 
     case "$choice" in
         1)
             log "[+] Entering Kali CLI"
+            kali_language
             echo "加载中..."
-            zsh
+            zsh -l
             break
             ;;
         2)
@@ -167,8 +226,15 @@ while true; do
             /.kali-config/linux/key
             ;;
         6)
-            log "[+] Start tome"
-            pkg install -y curl ; bash -c "$(curl -L gitee.com/mo2/linux/raw/2/2)"
+            if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+                log "[+] Start tmoe"
+                pkg install -y curl ; bash -c "$(curl -L gitee.com/mo2/linux/raw/2/2)"
+            else
+                echo
+                log "[!] Invalid selection, please try again" "${YELLOW}[!] 你只能在图形桌面上使用该功能${NC}"
+                echo "按回车键继续....."
+                read
+            fi
             ;;
         7)
             log "[+] start katoolin"
@@ -186,10 +252,57 @@ while true; do
             log "[+] Enter special about"
             /.kali-config/linux/about
             ;;
+        10)
+            if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+                log "[+] Executing Fix undercover mode"
+                cp -fr "/.kali-config/kali-undercover" "/bin/kali-undercover"
+                echo "已修复完成，按回车键继续...."
+                read
+            else
+                log "[!] Invalid selection, please try again"
+            fi
+            ;;
+        11)
+            if [ -e /bin/chromium ]; then
+                log "[+] Repair the chromium browser"
+                echo -e "${YELLOW}[!] 该功能是用于chromium无法正常启动或使用。当使用修复chromium浏览器后将会创建一个chromium-no-sandbox.desktop文件作为默认浏览器，该浏览器是使用chromium浏览器的--no-sandbox参数所启动的。你必须清楚关闭sandbox沙盒模式启动chromium浏览器会有什么问题。修复后不会覆盖其他文件${NC}"
+                echo "按回车键继续，Ctrl+C退出...."
+                read
+                browser_repair
+                if [ -n "$Repair_completed" ]; then
+                echo "按回车键继续...."
+                read
+                else
+                echo "chromium修复完成"
+                echo "按回车键继续...."
+                read
+                fi
+            else
+                log "[!] Invalid selection, please try again"
+            fi
+            ;;
+        99)
+                log "[*] Do users install the most basic default toolset?" "${YELLOW}[!]即将安装kali-linux-default软件包，这将安装最基本的信息安全工具，它也代表了Kali Linux 默认安装的软件集合。但是要注意的是这也将会占用大约8GB的手机磁盘空间。\n如果想安装更多工具集，可以在 '设置 → 体验基本完整的kali工具集' 上安装${RESET}"
+                read -p "是否继续安装(y/n): " answer
+                case $answer in
+                    [Yy]* )
+                        echo "即将安装"
+                        log "Start installation kali-linux-default"
+                        sudo apt install -y kali-linux-default
+                        ;;
+                    [Nn]* )
+                        log "The user canceled the installation kali-linux-default" "不安装了"
+                        ;;
+                    * )
+                        log "The user has no choice." "无效输入，请键入y或n"
+                        ;;
+                esac
+                ;;
         *)
             log "[!] Invalid selection, please try again"
             ;;
     esac
 done
+
 
 # Sansjtw Ankali

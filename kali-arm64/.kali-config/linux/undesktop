@@ -1,0 +1,158 @@
+#!/bin/bash
+
+# Set log file path
+LOG_DIR="/.kali-config/log"
+LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d').log"
+
+# Create log directory
+mkdir -p "$LOG_DIR"
+
+# Define log function
+log() {
+    echo -e "$1" >> "$LOG_FILE"  # Write to log file
+}
+
+# Define colored prompts
+info() {
+    echo -e "\e[34m[*] $1\e[0m"
+}
+
+warning() {
+    echo -e "\e[33m[!] $1\e[0m"
+}
+
+success() {
+    echo -e "\e[32m[+] $1\e[0m"
+}
+
+error() {
+    echo -e "\e[31m[-] $1\e[0m"
+}
+
+# Search for installed packages
+DESKTOPS=$(dpkg -l | grep -E 'kali-desktop-(gnome|kde|xfce|mate|lxde|cinnamon)' | awk '{print $2}')
+
+
+undesktop_en(){
+# Exit script if no desktops are found
+if [ -z "$DESKTOPS" ]; then
+    error "No installed desktop environments found."
+    log "No desktops found." "[!] No installed desktop environments found."
+    exit 1
+fi
+
+# Display menu
+info "Currently installed desktop environments:"
+log "Installed desktop environments:" "[*] Currently installed desktop environments:"
+echo "[0] Exit"
+MENU_INDEX=1
+declare -A MENU_ITEMS
+for DESKTOP in $DESKTOPS; do
+    MENU_ITEMS[$MENU_INDEX]=$DESKTOP
+    echo "[$MENU_INDEX] $DESKTOP"
+    MENU_INDEX=$((MENU_INDEX + 1))
+done
+
+# User selection
+while true; do
+    read -p "Please select a number to remove the corresponding desktop: " CHOICE
+    if [ "$CHOICE" -eq 0 ]; then
+        info "Exiting script."
+        log "User exited the script." "[*] Exiting script."
+        exit 0
+    elif [[ -n "${MENU_ITEMS[$CHOICE]}" ]]; then
+        SELECTED_DESKTOP=${MENU_ITEMS[$CHOICE]}
+        warning "About to remove desktop: $SELECTED_DESKTOP"
+        log "Selected desktop for removal: $SELECTED_DESKTOP" "[!] About to remove desktop: $SELECTED_DESKTOP"
+        
+        read -p "Remove dependencies? (y/n): " REMOVE_DEPENDENCIES
+        if [ "$REMOVE_DEPENDENCIES" == "y" ]; then
+            apt remove --purge "$SELECTED_DESKTOP" -y
+            log "Desktop $SELECTED_DESKTOP removed with dependencies." "[+] Desktop $SELECTED_DESKTOP and its dependencies removed."
+            success "Desktop $SELECTED_DESKTOP and its dependencies removed."
+        else
+            apt remove "$SELECTED_DESKTOP" -y
+            log "Desktop $SELECTED_DESKTOP removed without dependencies." "[+] Desktop $SELECTED_DESKTOP removed without removing dependencies."
+            success "Desktop $SELECTED_DESKTOP removed without removing dependencies."
+        fi
+
+        # Remove corresponding entry from ~/.kali-config/kali-desktop file
+        sed -i "/$SELECTED_DESKTOP/d" ~/.kali-config/kali-desktop
+        log "Entry $SELECTED_DESKTOP removed from ~/.kali-config/kali-desktop." "[+] Entry $SELECTED_DESKTOP removed from ~/.kali-config/kali-desktop."
+        success "Entry $SELECTED_DESKTOP removed from ~/.kali-config/kali-desktop."
+
+        break
+    else
+        error "Invalid selection, please try again."
+        log "Invalid selection." "[-] Invalid selection, please try again."
+    fi
+done
+}
+
+undesktop_cn(){
+# 如果没有找到任何桌面，退出脚本
+if [ -z "$DESKTOPS" ]; then
+    error "没有检测到任何已安装的图形桌面GUI。"
+    log "No desktops found." "[!] 没有检测到任何已安装的图形桌面GUI。"
+    exit 1
+fi
+
+# 列出菜单
+info "当前已安装的图形桌面GUI:"
+log "Installed desktop environments:" "[*] 当前已安装的图形桌面GUI:"
+echo "[0] 退出"
+MENU_INDEX=1
+declare -A MENU_ITEMS
+for DESKTOP in $DESKTOPS; do
+    MENU_ITEMS[$MENU_INDEX]=$DESKTOP
+    echo "[$MENU_INDEX] $DESKTOP"
+    MENU_INDEX=$((MENU_INDEX + 1))
+done
+
+# 用户选择
+while true; do
+    read -p "请选择一个数字以删除对应桌面: " CHOICE
+    if [ "$CHOICE" -eq 0 ]; then
+        info "退出脚本。"
+        log "User exited the script." "[*] 退出脚本。"
+        exit 0
+    elif [[ -n "${MENU_ITEMS[$CHOICE]}" ]]; then
+        SELECTED_DESKTOP=${MENU_ITEMS[$CHOICE]}
+        warning "即将删除桌面: $SELECTED_DESKTOP"
+        log "Selected desktop for removal: $SELECTED_DESKTOP" "[!] 即将删除桌面: $SELECTED_DESKTOP"
+        
+        read -p "是否删除依赖包？(y/n): " REMOVE_DEPENDENCIES
+        if [ "$REMOVE_DEPENDENCIES" == "y" ]; then
+            apt remove --purge "$SELECTED_DESKTOP" -y
+            log "Desktop $SELECTED_DESKTOP removed with dependencies." "[+] 桌面 $SELECTED_DESKTOP 及其依赖包已删除。"
+            success "桌面 $SELECTED_DESKTOP 及其依赖包已删除。"
+        else
+            apt remove "$SELECTED_DESKTOP" -y
+            log "Desktop $SELECTED_DESKTOP removed without dependencies." "[+] 桌面 $SELECTED_DESKTOP 已删除，未删除依赖包。"
+            success "桌面 $SELECTED_DESKTOP 已删除，未删除依赖包。"
+        fi
+
+        # 从~/.kali-config/kali-desktop文件中删除相应条目
+        sed -i "/$SELECTED_DESKTOP/d" ~/.kali-config/kali-desktop
+        log "Entry $SELECTED_DESKTOP removed from ~/.kali-config/kali-desktop." "[+] 已从 ~/.kali-config/kali-desktop 中删除 $SELECTED_DESKTOP 条目。"
+        success "已从 ~/.kali-config/kali-desktop 中删除 $SELECTED_DESKTOP 条目。"
+
+        break
+    else
+        error "无效选择，请重试。"
+        log "Invalid selection." "[-] 无效选择，请重试。"
+    fi
+done
+}
+
+CONFIG_FILE="/.kali-config/Ankali.conf"
+
+LANGUAGE=$(grep -v '^//' "$CONFIG_FILE" | grep -w 'LANGUAGE' | cut -d '=' -f2)
+
+if [ "$LANGUAGE" = "CN" ]; then
+    undesktop_cn
+elif [ "$LANGUAGE" = "EN" ]; then
+    undesktop_en
+else
+    undesktop_en
+fi

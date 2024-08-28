@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name[zh_CN]=Ankali功能菜单
+Comment[zh_CN]=用于进入菜单的程序
+Name[en]=Ankali Function menu
+Comment[en]=A program for accessing the menu.
+Name[ja]=Ankali 機能メニュー
+Comment[ja]=Ankaliメニューに入るためのプログラム
+Exec=/usr/share/Ankali/exec/ankali
+Icon=/usr/share/Ankali/icon/icon.png
+Terminal=true
+Categories=System;Utility;

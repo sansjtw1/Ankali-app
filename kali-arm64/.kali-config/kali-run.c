@@ -127,30 +127,51 @@ void initialize_language() {
         if (choice == 'y') {
             log_message(SUCCESS " User selected English.");
             printf(GREEN SUCCESS " User selected English." NC "\n");
-            update_config_value(LANGUAGE_CONF, "LANG", "en_US.UTF-8");
-            update_config_value(LANGUAGE_CONF, "LANGUAGE", "en_US:en");
+            update_config_value(LANGUAGE_CONF, "export LANG", "en_US.UTF-8");
+            update_config_value(LANGUAGE_CONF, "export LANGUAGE", "en_US:en_US:en_US:en");
             log_message(INFO " Language configuration written to " LANGUAGE_CONF ".");
 
             update_config_value(CONFIG_FILE, "INITIALIZATION", "true");
             update_config_value(CONFIG_FILE, "LANGUAGE", "EN");
             log_message(SUCCESS " INITIALIZATION set to true, LANGUAGE set to EN.");
-
+            
+            // 添加快捷方式的逻辑
+            log_message(INFO " Adding shortcuts as per user request.");
+            system("cp -r /.kali-config/desktop/Ankali /usr/share/");
+            system("cp /.kali-config/desktop/applications/Ankali.desktop /usr/share/applications/");
+            system("ln -s /usr/share/Ankali/exec/ankali /bin/ankali");
+            system("ln -s /usr/share/Ankali/exec/ankali /bin/kali-menu");
+            system("chmod -R 755 /usr/share/Ankali");
+            system("chmod 755 /usr/share/applications/Ankali.desktop");
+            log_message(SUCCESS " Shortcuts added successfully.");
+            
             // 执行英文脚本
             system("/.kali-config/kali_conf");
+
             break;
         } else if (choice == 'n') {
             log_message(SUCCESS " User selected Chinese.");
             printf(GREEN SUCCESS " User selected Chinese." NC "\n");
-            update_config_value(LANGUAGE_CONF, "LANG", "zh_CN.UTF-8");
-            update_config_value(LANGUAGE_CONF, "LANGUAGE", "zh_CN:zh:en_US:en");
+            update_config_value(LANGUAGE_CONF, "export LANG", "zh_CN.UTF-8");
+            update_config_value(LANGUAGE_CONF, "export LANGUAGE", "zh_CN:zh:en_US:en");
             log_message(INFO " Language configuration written to " LANGUAGE_CONF ".");
 
             update_config_value(CONFIG_FILE, "INITIALIZATION", "true");
             update_config_value(CONFIG_FILE, "LANGUAGE", "CN");
-            log_message(SUCCESS " INITIALIZATION set to true, LANGUAGE set to CN.");
-
-            // 执行中文脚本
+            log_message(SUCCESS "INITIALIZATION set to true, LANGUAGE set to CN.");
+            // 添加快捷方式的逻辑
+            log_message(INFO " Adding shortcuts as per user request.");
+            system("cp -r /.kali-config/desktop/Ankali /usr/share/");
+            system("cp /.kali-config/desktop/applications/Ankali.desktop /usr/share/applications/");
+            system("ln -s /usr/share/Ankali/exec/ankali /bin/ankali");
+            system("ln -s /usr/share/Ankali/exec/ankali /bin/kali-menu");
+            system("chmod -R 755 /usr/share/Ankali");
+            system("chmod 755 /usr/share/applications/Ankali.desktop");
+            log_message(SUCCESS " Shortcuts added successfully.");
+            
+             // 执行中文脚本
             system("/.kali-config/kali_conf_cn");
+
             break;
         } else {
             log_message(ERROR " Invalid selection. Please try again.");
@@ -158,6 +179,7 @@ void initialize_language() {
         }
     }
 }
+
 
 int main() {
     // 确保日志目录存在

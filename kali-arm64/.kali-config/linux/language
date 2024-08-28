@@ -44,6 +44,37 @@ languages=(
     "sl_SI.UTF-8 Slovenščina (Slovenian)"
     "is_IS.UTF-8 Íslenska (Icelandic)"
     "mt_MT.UTF-8 Malti (Maltese)"
+    "ga_IE.UTF-8 Gaeilge (Irish)"
+    "eu_ES.UTF-8 Euskara (Basque)"
+    "gl_ES.UTF-8 Galego (Galician)"
+    "ca_ES.UTF-8 Català (Catalan)"
+    "mk_MK.UTF-8 Македонски (Macedonian)"
+    "sq_AL.UTF-8 Shqip (Albanian)"
+    "be_BY.UTF-8 Беларуская (Belarusian)"
+    "kk_KZ.UTF-8 Қазақша (Kazakh)"
+    "az_AZ.UTF-8 Azərbaycan (Azerbaijani)"
+    "hy_AM.UTF-8 Հայերեն (Armenian)"
+    "ka_GE.UTF-8 ქართული (Georgian)"
+    "uz_UZ.UTF-8 Oʻzbek (Uzbek)"
+    "mn_MN.UTF-8 Монгол (Mongolian)"
+    "ur_PK.UTF-8 اردو (Urdu)"
+    "bn_BD.UTF-8 বাংলা (Bengali)"
+    "ta_IN.UTF-8 தமிழ் (Tamil)"
+    "te_IN.UTF-8 తెలుగు (Telugu)"
+    "ml_IN.UTF-8 മലയാളം (Malayalam)"
+    "kn_IN.UTF-8 ಕನ್ನಡ (Kannada)"
+    "gu_IN.UTF-8 ગુજરાતી (Gujarati)"
+    "pa_IN.UTF-8 ਪੰਜਾਬੀ (Punjabi)"
+    "si_LK.UTF-8 සිංහල (Sinhala)"
+    "my_MM.UTF-8 မြန်မာစာ (Burmese)"
+    "km_KH.UTF-8 ភាសាខ្មែរ (Khmer)"
+    "lo_LA.UTF-8 ລາວ (Lao)"
+    "am_ET.UTF-8 አማርኛ (Amharic)"
+    "zu_ZA.UTF-8 isiZulu (Zulu)"
+    "xh_ZA.UTF-8 isiXhosa (Xhosa)"
+    "st_ZA.UTF-8 Sesotho (Sotho)"
+    "tn_ZA.UTF-8 Setswana (Tswana)"
+    "sw_KE.UTF-8 Kiswahili (Swahili)"
 )
 
 # Set log file path
@@ -63,6 +94,7 @@ languages_cntw(){
 
 # 顯示語言選項菜單
 log "Displaying language selection menu" "顯示語言選項菜單"
+echo "可能部分語言並不支持kali linux"
 echo "請選擇語言："
 select lang in "${languages[@]}"; do
     if [[ -n "$lang" ]]; then
@@ -111,6 +143,7 @@ echo "可以使用以下命令手動重啟: sudo reboot"
 languages_en(){
 # Display language selection menu
 log "Displaying language selection menu" "Displaying language selection menu"
+echo "Some languages may not be supported by Kali Linux."
 echo "Please select a language:"
 select lang in "${languages[@]}"; do
     if [[ -n "$lang" ]]; then

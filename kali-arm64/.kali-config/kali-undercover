@@ -1,0 +1,76 @@
+#!/usr/bin/env sh
+# Undercover mode startup and shutdown script for fix graphics desktop
+
+# 定义一些基本的目录和文件路径
+LOCAL_DIR=~/.local/share/kali-undercover
+SHARE_DIR=/usr/share/kali-undercover
+XFCE4_DESKTOP_PROFILES=$SHARE_DIR/scripts/xfce4-desktop-profiles.py
+KALI_UNDERCOVER_PROFILE=$SHARE_DIR/kali-undercover-profile.tar.bz2
+USER_PROFILE=$LOCAL_DIR/user-profile.tar.bz2
+
+# 创建本地目录以存储用户配置文件
+mkdir -p $LOCAL_DIR
+
+# 启用卧底模式
+enable_undercover() {
+    echo "Saving current user profile..." >&2
+    # 保存当前用户的桌面配置
+    python3 $XFCE4_DESKTOP_PROFILES save $USER_PROFILE
+    
+    echo "Loading undercover profile..." >&2
+    # 加载卧底模式的配置
+    python3 $XFCE4_DESKTOP_PROFILES load $KALI_UNDERCOVER_PROFILE
+
+    # 设置卧底模式的壁纸
+    xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/image-path -s "$SHARE_DIR/wallpapers/win10.jpg"
+
+    # 通知用户卧底模式已启用
+    notify-send -i dialog-information 'Undercover mode activated'
+}
+
+# 禁用卧底模式
+disable_undercover() {
+    if [ ! -f $USER_PROFILE ]; then
+        echo "User profile backup not found. Cannot restore." >&2
+        exit 1
+    fi
+
+    echo "Restoring user profile..." >&2
+    # 恢复用户的原始配置
+    python3 $XFCE4_DESKTOP_PROFILES load $USER_PROFILE
+
+    # 恢复默认壁纸
+    xfconf-query -c xfce4-desktop -p /backdrop/screen0/monitor0/image-path -s "/usr/share/backgrounds/xfce/xfce-blue.jpg"
+
+    # 删除备份以避免混淆
+    rm -f $USER_PROFILE
+
+    # 通知用户桌面配置已恢复
+    notify-send -i dialog-information 'Desktop settings restored'
+}
+
+# 切换模式
+if [ -f $USER_PROFILE ]; then
+    disable_undercover
+    echo "你需要重启生效"
+    echo "You need to restart to take effect."
+else
+    enable_undercover
+    echo "你需要重启生效"
+    echo "You need to restart to take effect."
+fi
+
+# 强制刷新桌面环境
+echo "Restarting xfce4-panel and desktop services..." >&2
+xfce4-panel -r
+xfdesktop --reload &
+
+# 确保 shell 环境刷新
+echo "Refreshing shell environment..." >&2
+shell="$(cat /proc/$PPID/comm)"
+if [ "${shell}" = 'bash' ] || [ "${shell}" = 'zsh' ]; then
+    clear
+    $shell
+fi
+
+# © SansJtw Ankali

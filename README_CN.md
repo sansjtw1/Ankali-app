@@ -52,7 +52,7 @@ Ankali不依赖其他应用程序，如Termux。因为他自己就是一个Andro
 
 **Android终端模拟器基于**: [TermOne Plus](https://termoneplus.com/)
 
-**引用了Tome部分文件**: [Tome](https://github.com/2moe/tmoe)
+**引用了Tmoe部分文件**: [Tome](https://github.com/2moe/tmoe)
 
 **Proot预编译程序**: [build-proot-android](https://github.com/green-green-avk/build-proot-android)
 

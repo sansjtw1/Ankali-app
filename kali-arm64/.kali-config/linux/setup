@@ -64,7 +64,8 @@ main_menu_cn() {
         echo -e "${GREEN}[2]${RESET} 配置软件源地址"
         echo -e "${GREEN}[3]${RESET} 功能菜单设置"
         echo -e "${GREEN}[4]${RESET} 清除日志文件"
-        echo -e "${GREEN}[5]${RESET} 退出"
+        echo -e "${GREEN}[5]${RESET} 体验基本完整的kali工具集"
+        echo -e "${GREEN}[6]${RESET} 退出"
         read -p "选择一个选项 [1-5]: " choice
 
         case $choice in
@@ -102,6 +103,23 @@ main_menu_cn() {
                 mkdir "$LOG_DIR"
                 ;;
             5)
+                log "[*] The kali toolset with basically complete experience has been selected. Do you want to install it?" "${YELLOW}即将安装kali-linux-default和kali-linux-large软件包，这将安装大量的信息安全工具。Kali Linux 环境变得更加丰富还原，能够应对更广泛的安全测试场景。但是要注意的是这也将会占用大量的手机磁盘空间与系统资源。${RESET}"
+                read -p "是否继续安装(y/n): " answer
+                case $answer in
+                    [Yy]* )
+                        echo "即将安装"
+                        log "Start installation kali-linux-large kali-linux-default"
+                        sudo apt install -y kali-linux-default kali-linux-large
+                        ;;
+                    [Nn]* )
+                        log "The user canceled the installation kali-linux-large kali-linux-default" "不安装了"
+                        ;;
+                    * )
+                        log "The user has no choice." "无效输入，请键入y或n"
+                        ;;
+                esac
+                ;;
+            6)
                 exit 1
                 ;;
             *)
@@ -138,9 +156,11 @@ feature_menu_cn() {
                 if [[ "$LANGUAGE" == "CN" ]]; then
                     LANGUAGE="EN"
                     log "[!] Notice: You need to restart the effective menu after changing the language" "${YELLOW}[!] 更换语言后需要重启生效菜单哦${RESET}"
+                    echo -e "${YELLOW}[!] You need to restart the effective menu after changing the language${RESET}"
                 else
                     LANGUAGE="CN"
                     log "[!] Notice: You need to restart the effective menu after changing the language" "${YELLOW}[!] 更换语言后需要重启生效菜单哦${RESET}"
+                    echo -e "${YELLOW}[!] You need to restart the effective menu after changing the language${RESET}"
                 fi
                 # 更新配置文件中的值
                 sed -i "s/^LANGUAGE=.*/LANGUAGE=$LANGUAGE/" "$CONFIG_FILE"
@@ -183,7 +203,8 @@ main_menu_en() {
         echo -e "${GREEN}[2]${RESET} Configure Software Source Address"
         echo -e "${GREEN}[3]${RESET} Feature Menu Settings"
         echo -e "${GREEN}[4]${RESET} Clear Log Files"
-        echo -e "${GREEN}[5]${RESET} Exit"
+        echo -e "${GREEN}[5]${RESET} Experience a complete basic set of Kali tools"
+        echo -e "${GREEN}[6]${RESET} Exit"
         read -p "Choose an option [1-5]: " choice
 
         case $choice in
@@ -222,6 +243,22 @@ main_menu_en() {
                 mkdir /.kali-config/log
                 ;;
             5)
+                log "[*] The Kali toolset with a basically complete experience has been selected. Do you want to install it?" "${YELLOW}The packages kali-linux-default and kali-linux-large will be installed, which will add a large number of security tools. This will make the Kali Linux environment more comprehensive and capable of handling a wider range of security testing scenarios. However, please note that this will also consume a significant amount of disk space and system resources.${RESET}"
+                read -p "Do you want to continue the installation (y/n): " answer
+                case $answer in
+                    [Yy]* )
+                        log "Start installation kali-linux-large kali-linux-default" "Proceeding with installation"
+                        sudo apt install -y kali-linux-default kali-linux-large
+                        ;;
+                    [Nn]* )
+                        log "User canceled installation kali-linux-large kali-linux-default" "Installation canceled"
+                        ;;
+                    * )
+                        log "User has no choice." "Invalid input, please type y or n."
+                        ;;
+                esac
+                ;;
+            6)
                 log "Exiting script" "${YELLOW}Exiting...${RESET}"
                 exit 1
                 ;;
@@ -262,9 +299,11 @@ feature_menu_en() {
                 if [[ "$LANGUAGE" == "CN" ]]; then
                     LANGUAGE="EN"
                     log "[!] Notice: You need to restart the effective menu after changing the language" "${YELLOW}[!] You need to restart the effective menu after changing the language${RESET}"
+                    echo -e "${YELLOW}[!] 更换语言后需要重启生效菜单哦${RESET}"
                 else
                     LANGUAGE="CN"
                     log "[!] Notice: You need to restart the effective menu after changing the language" "${YELLOW}[!] You need to restart the effective menu after changing the language${RESET}"
+                    echo -e "${YELLOW}[!] 更换语言后需要重启生效菜单哦${RESET}"
                 fi
                 # Update the configuration file with the new value
                 sed -i "s/^LANGUAGE=.*/LANGUAGE=$LANGUAGE/" "$CONFIG_FILE"
