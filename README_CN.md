@@ -4,6 +4,10 @@ Ankali App是一种利用Proot在Android设备上创建隔离的“chroot”环�
 
 ![phone](picture/phone.png)
 
+## Ankali中文文档
+
+https://ankali-docs.netlify.app/cn
+
 ## 软件信息
 
 Ankali不依赖其他应用程序，如Termux。因为他自己就是一个Android终端模拟器应用程序
