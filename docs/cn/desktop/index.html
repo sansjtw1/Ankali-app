@@ -526,11 +526,11 @@
 <p>功能位于功能菜单<code>Graphical Desktop GUI and VNC Service</code>(图形桌面GUI和VNC服务)当中。Install GUI Graphical Desktop是一个选择菜单且其中提供7个桌面环境的自动化安装，根据自行的选择输入对应的桌面环境进行安装。</p>
 <blockquote>
 <p>安装图形桌面环境需要时间，请保持网络良好，存储空间充足的情况下安装。</p>
-<p>在安装桌面环境前建议先<a href="/language">配置kali系统语言</a>，当桌面安装时会自动根据你的系统语言配置您的桌面语言。</p>
+<p>在安装桌面环境前建议先<a href="/cn/language">配置kali系统语言</a>，当桌面安装时会自动根据你的系统语言配置您的桌面语言。</p>
 <p>在安装环境时建议<code>XFCE</code>桌面，XFCE桌面环境是一个轻量级的桌面环境，此桌面环境在Ankali中会带来高效的体验。</p>
 </blockquote>
 <p><img alt="Install desktop environment" src="/img/6-1.png" /></p>
-<p>在安装桌面环境的过程可能会出现参数配置界面TUI，可以根据自行要求选择，通过<a href="/Special_key">特殊键</a>去操作该界面。当然可以在考虑后的情况下直接回车默认选择即可。</p>
+<p>在安装桌面环境的过程可能会出现参数配置界面TUI，可以根据自行要求选择，通过<a href="/cn/Special_key">特殊键</a>去操作该界面。当然可以在考虑后的情况下直接回车默认选择即可。</p>
 <p><img alt="Configure the desktop environment" src="/img/6-2.png" /></p>
 <h2 id="vnc-servicevnc">VNC Service(VNC服务)<a class="headerlink" href="#vnc-servicevnc" title="Permanent link">&para;</a></h2>
 <p>当你的桌面环境成功安装至您的kali后，可以借助VNC服务通过启动VNC服务远程启动管理你的桌面。</p>
@@ -553,17 +553,17 @@
 </ul>
 <p><img alt="VNC service" src="/img/6-3.png" /></p>
 <h3 id="install-vnc-servicevnc">Install VNC Service(安装VNC服务)<a class="headerlink" href="#install-vnc-servicevnc" title="Permanent link">&para;</a></h3>
-<p>该功能用于安装VNC Service，如果你想在<a href="/CLI">CLI</a>手动安装它</p>
+<p>该功能用于安装VNC Service，如果你想在<a href="/cn/CLI">CLI</a>手动安装它</p>
 <pre><code>sudo apt update
 sudo apt install -y tigervnc-standalone-server xinit
 </code></pre>
 <h3 id="install-novnc-servicenovnc">Install NOVNC Service(安装NOVNC服务)<a class="headerlink" href="#install-novnc-servicenovnc" title="Permanent link">&para;</a></h3>
-<p>该功能用于安装NOVNC Service，如果你想在<a href="/CLI">CLI</a>手动安装它</p>
+<p>该功能用于安装NOVNC Service，如果你想在<a href="/cn/CLI">CLI</a>手动安装它</p>
 <pre><code>sudo apt update
 sudo apt install novnc websockify -y
 </code></pre>
 <h3 id="configure-vnc-passwordvnc">Configure VNC Password(配置VNC密码)<a class="headerlink" href="#configure-vnc-passwordvnc" title="Permanent link">&para;</a></h3>
-<p>当你的VNC服务已安装至kali中时，需要您使用该功能配置您的VNC访问密码。因为为了保证远程连接的安全性，这是必须的。如果你想在<a href="/CLI">CLI</a>手动设置它</p>
+<p>当你的VNC服务已安装至kali中时，需要您使用该功能配置您的VNC访问密码。因为为了保证远程连接的安全性，这是必须的。如果你想在<a href="/cn/CLI">CLI</a>手动设置它</p>
 <pre><code>vncpasswd
 </code></pre>
 <h3 id="start-the-graphical-desktop-and-vnc-service-directlyvnc">Start the graphical desktop and VNC service directly(直接启动图形桌面和VNC服务)<a class="headerlink" href="#start-the-graphical-desktop-and-vnc-service-directlyvnc" title="Permanent link">&para;</a></h3>
