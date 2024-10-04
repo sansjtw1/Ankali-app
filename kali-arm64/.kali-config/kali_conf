@@ -1,4 +1,25 @@
 #!/bin/bash
+# Copyright (c) 2024 Ankali SansJtw
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# Email: sansjtw@163.com, sansjtw1@gmail.com
 
 # Set log file path
 LOG_DIR="/.kali-config/log"
@@ -24,11 +45,33 @@ RESET="\033[0m"
 NC='\033[0m' # No color
 
 # Read configuration file and ignore comments
-CONF_FILE="/.kali-config/Ankali.conf"
-while read -r line; do
-    [[ "$line" =~ ^//.*$ ]] && continue  # Ignore comment lines
-    eval "$line"
-done < <(grep -v '^//' "$CONF_FILE")
+CONF_FILE="/.kali-config/Ankali.yaml"
+
+if [ ! -f "$CONF_FILE" ]; then
+    echo "${RED}[-] Configuration file does not exist：$CONF_FILE ${NC}"
+    exit 1
+fi
+
+get_config_value() {
+    local key=$1
+    grep "^$key:" "$CONF_FILE" | cut -d ' ' -f 2-
+}
+
+INITIALIZATION=$(get_config_value "INITIALIZATION")
+LANGUAGE=$(get_config_value "LANGUAGE")
+NOOPENMENU=$(get_config_value "NOOPENMENU")
+NEOFETCH=$(get_config_value "NEOFETCH")
+OPTIMIZE=$(get_config_value "OPTIMIZE")
+DEPLOY=$(get_config_value "DEPLOY")
+TITLES=$(get_config_value "TITLES")
+SSH_INITIALIZATION=$(get_config_value "SSH_INITIALIZATION")
+SSH_NOOPENMENU=$(get_config_value "SSH_NOOPENMENU")
+SSH_PORT=$(get_config_value "SSH_PORT")
+SSH_IP=$(get_config_value "SSH_IP")
+SSH_LOG=$(get_config_value "SSH_LOG")
+SSH_BACK=$(get_config_value "SSH_BACK")
+SSH_SHELL=$(get_config_value "SSH_SHELL")
+SSH_CLI=$(get_config_value "SSH_CLI")
 
 # Check NEOFETCH configuration
 if [ "$NEOFETCH" == "true" ]; then
@@ -54,11 +97,11 @@ if [ "$OPTIMIZE" == "false" ]; then
     if [ "$LANGUAGE" == "CN" ]; then
         log "[*] LANGUAGE is set to CN, running /.kali-config/.profile" "${YELLOW}[*] LANGUAGE is set to CN, running .profile...${NC}"
         source "/.kali-config/.profile"
-        sed -i 's/^OPTIMIZE=false/OPTIMIZE=true/' "$CONF_FILE"
-        sed -i 's/^DEPLOY=false/DEPLOY=true/' "$CONF_FILE"
+        sed -i 's/^OPTIMIZE: false/OPTIMIZE: true/' "$CONF_FILE"
+        sed -i 's/^DEPLOY: false/DEPLOY: true/' "$CONF_FILE"
         log "[+] OPTIMIZE and DEPLOY set to true, entering Function Menu" 
         goto_function_menu=true
-        apt install kali-linux-core -y
+        apt install kali-linux-core python3-prettytable -y
     else
         log "[*] LANGUAGE is set to EN, entering System Configuration" 
         fi
@@ -102,11 +145,11 @@ if [[ -z "$mirror" ]]; then
 fi
 
         echo "$mirror" > /etc/apt/sources.list
-        apt update && apt upgrade -y && apt install wget curl whiptail -y && apt install kali-linux-core -y
+        apt update && apt upgrade -y && apt install wget curl whiptail -y && apt install kali-linux-core -y && apt install python3-prettytable -y
         log "[+] Mirror source configured as: $mirror" "${GREEN}[+] Mirror source configured as: $mirror${NC}"
 
         # Update OPTIMIZE configuration to true
-        sed -i 's/^OPTIMIZE=false/OPTIMIZE=true/' "$CONF_FILE"
+        sed -i 's/^OPTIMIZE: false/OPTIMIZE: true/' "$CONF_FILE"
         log "[+] OPTIMIZE set to true, entering Function Menu"
     fi
 fi
@@ -151,6 +194,93 @@ else
 fi
 }
 
+ssh_Start_service(){
+# Read config variables
+if pgrep -lf dropbear > /dev/null; then
+    echo -e "Dropbear process detected, automatically killing and restarting Dropbear SSH"
+    pkill dropbear
+fi
+SSH_IP="${SSH_IP:-127.0.0.1}"       
+SSH_PORT="${SSH_PORT:-8022}"
+SSH_LOG="${SSH_LOG:-false}"      
+SSH_BACK="${SSH_BACK:-true}"     
+SSH_SHELL="${SSH_SHELL:-ankali}"     
+
+# echo $SSH_IP
+# echo $SSH_PORT
+# echo $SSH_LOG
+# echo $SSH_BACK
+# echo $SSH_SHELL
+
+DROPBEAR_CMD="dropbear -p $SSH_IP:$SSH_PORT"
+
+houtaiyunxingssh(){
+if pgrep -lf dropbear > /dev/null; then
+    echo -e "${YELLOW}Dropbear SSH is running in the background:${NC}"
+    pgrep -lf dropbear
+    echo -e "${YELLOW}You can use this command to connect to your SSH service\n${GREEN}ssh -p ${BLUE}$SSH_PORT root@${RED}$SSH_IP${NC}"
+    sleep 1
+else
+    echo -e "${RED} [-] Dropbear SSH failed to start. Please check if the configuration file /.kali-config/Ankali.yaml is correct or check the log file for today's date /.kali-config/log/$(date +'%Y-%m-%d').log${NC}"
+    sleep 0.5
+fi
+}
+
+if [ "$SSH_LOG" == "true" ]; then
+    DROPBEAR_CMD+=" -E"         
+fi
+
+if [ "$SSH_CLI" == "false" ]; then
+    DROPBEAR_CMD+=" -c $SSH_SHELL"         
+fi
+if [ "$SSH_BACK" == "false" ]; then
+    DROPBEAR_CMD+=" -F"          
+    echo -e "${YELLOW}Dropbear SSH will run in the foreground. Press CTRL+C to exit${NC}"
+    echo -e "${YELLOW}You can use this command to connect to your SSH service\n${GREEN}ssh -p ${BLUE}$SSH_PORT root@${RED}$SSH_IP${NC}"
+    $DROPBEAR_CMD
+else
+    $DROPBEAR_CMD
+    houtaiyunxingssh
+    sleep 1
+fi
+}
+
+SSH_NOOPENMENU_DEPLOY(){
+if [ "$SSH_NOOPENMENU" == "true" ]; then
+# Read configuration variables
+if pgrep -lf dropbear > /dev/null; then
+log "Dropbear process detected, skipping Dropbear ssh startup"
+else
+SSH_IP="${SSH_IP:-127.0.0.1}"       
+SSH_PORT="${SSH_PORT:-8022}"
+SSH_LOG="${SSH_LOG:-false}"      
+SSH_BACK="${SSH_BACK:-true}"     
+SSH_SHELL="${SSH_SHELL:-ankali}"     
+DROPBEAR_CMD="dropbear -p $SSH_IP:$SSH_PORT"
+houtaiyunxingssh(){
+     if pgrep -lf dropbear > /dev/null; then
+         echo -e "${YELLOW}Dropbear SSH is running in the background:${NC}"
+         pgrep -lf dropbear
+         echo -e "${YELLOW}You can use this command to connect to your ssh service\n${GREEN}ssh -p ${BLUE}$SSH_PORT root@${RED}$SSH_IP${NC}"
+         sleep 0.2
+     else
+         echo -e "${RED} [-]Dropbear ssh startup failed, please check if the configuration file /.kali-config/Ankali.yaml is set correctly or check the log file for today /.kali-config/log/$(date +'%Y-%m-%d').log${NC}"
+         sleep 0.2
+     fi
+}
+if [ "$SSH_LOG" == "true" ]; then
+     DROPBEAR_CMD+=" -E"         
+fi
+
+if [ "$SSH_CLI" == "false" ]; then
+     DROPBEAR_CMD+=" -c $SSH_SHELL"         
+fi
+$DROPBEAR_CMD
+houtaiyunxingssh
+fi
+fi
+}
+
 # Function Menu
 # Title
 kali_titles(){
@@ -172,11 +302,14 @@ else
 log "[+]TITLES is false, and the title is not displayed."
 fi
 }
+# Self-starting ssh service
+SSH_NOOPENMENU_DEPLOY
+
 while true; do
     kali_titles
     echo -e "\n${BLUE}========= Function Menu =========${NC}"
     echo -e "${GREEN}[1] Enter Kali CLI${NC}"
-    echo -e "${GREEN}[2] Set root account password${NC}"
+    echo -e "${GREEN}[2] Set user account password${NC}"
     echo -e "${GREEN}[3] Configure system language${NC}"
     echo -e "${GREEN}[4] Graphical Desktop GUI and VNC Service${NC}"
     echo -e "${GREEN}[5] Special Key${NC}"
@@ -191,7 +324,11 @@ while true; do
             echo -e "${GREEN}[11] Repair the Chromium browser.${NC}"
         fi
     fi
-    echo -e "${GREEN}\n[99] Install the basic default toolset${NC}"
+    echo
+    if [ "$SSH_INITIALIZATION" == "true" ]; then
+    echo -e "${GREEN}[98] Start SSH service${NC}"
+    fi
+    echo -e "${GREEN}[99] Install the basic default toolset${NC}"
     echo -e "${BLUE}============================${NC}"
     read -p "$(echo -e ${YELLOW}[*] Please enter the number of the function you want to use: ${NC})" choice
 
@@ -272,6 +409,13 @@ while true; do
                 fi
             else
                 log "[!] Invalid selection, please try again"
+            fi
+            ;;
+        98)
+            if [ "$SSH_INITIALIZATION" == "true" ]; then
+            ssh_Start_service
+            else
+            log "[!] Invalid selection, please try again"
             fi
             ;;
         99)

@@ -1,4 +1,25 @@
 #!/bin/bash
+# Copyright (c) 2024 Ankali SansJtw
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# Email: sansjtw@163.com, sansjtw1@gmail.com
 
 # 设置日志文件路径
 LOG_DIR="/.kali-config/log"
@@ -23,12 +44,39 @@ WHITE="\033[1;37m"
 RESET="\033[0m"
 NC='\033[0m' # 无颜色
 
-# 读取配置文件并忽略注释
-CONF_FILE="/.kali-config/Ankali.conf"
-while read -r line; do
-    [[ "$line" =~ ^//.*$ ]] && continue  # 忽略注释行
-    eval "$line"
-done < <(grep -v '^//' "$CONF_FILE")
+# 读取YAML配置文件
+
+# 配置文件路径
+CONF_FILE="/.kali-config/Ankali.yaml"
+
+# 确保配置文件存在
+if [ ! -f "$CONF_FILE" ]; then
+    echo "${RED}[-] 配置文件不存在：$CONF_FILE ${NC}"
+    exit 1
+fi
+
+get_config_value() {
+    local key=$1
+    grep "^$key:" "$CONF_FILE" | cut -d ' ' -f 2-
+}
+
+# 读取配置项并保存到变量中
+INITIALIZATION=$(get_config_value "INITIALIZATION")
+LANGUAGE=$(get_config_value "LANGUAGE")
+NOOPENMENU=$(get_config_value "NOOPENMENU")
+NEOFETCH=$(get_config_value "NEOFETCH")
+OPTIMIZE=$(get_config_value "OPTIMIZE")
+DEPLOY=$(get_config_value "DEPLOY")
+TITLES=$(get_config_value "TITLES")
+LIUNXUSER=$(get_config_value "LIUNXUSER")
+SSH_INITIALIZATION=$(get_config_value "SSH_INITIALIZATION")
+SSH_NOOPENMENU=$(get_config_value "SSH_NOOPENMENU")
+SSH_PORT=$(get_config_value "SSH_PORT")
+SSH_IP=$(get_config_value "SSH_IP")
+SSH_LOG=$(get_config_value "SSH_LOG")
+SSH_BACK=$(get_config_value "SSH_BACK")
+SSH_SHELL=$(get_config_value "SSH_SHELL")
+SSH_CLI=$(get_config_value "SSH_CLI")
 
 # 检查 NEOFETCH 配置
 if [ "$NEOFETCH" == "true" ]; then
@@ -54,11 +102,11 @@ if [ "$OPTIMIZE" == "false" ]; then
     if [ "$LANGUAGE" == "CN" ]; then
         log "[*] LANGUAGE is set to CN, running /.kali-config/.profile" "${YELLOW}[*] 语言设置为 CN，正在运行 .profile...${NC}"
         source "/.kali-config/.profile"
-        sed -i 's/^OPTIMIZE=false/OPTIMIZE=true/' "$CONF_FILE"
-        sed -i 's/^DEPLOY=false/DEPLOY=true/' "$CONF_FILE"
+        sed -i 's/^OPTIMIZE: false/OPTIMIZE: true/' "$CONF_FILE"
+        sed -i 's/^DEPLOY: false/DEPLOY: true/' "$CONF_FILE"
         log "[+] OPTIMIZE and DEPLOY set to true, entering Function Menu"
         goto_function_menu=true
-        apt install kali-linux-core -y
+        apt install kali-linux-core python3-prettytable -y 
     else
         log "[*] LANGUAGE is set to EN, entering System Configuration" "${YELLOW}[*] 语言设置为 EN，进入系统配置...${NC}"
     fi
@@ -69,8 +117,7 @@ fi
 
 # 如果 LANGUAGE 为 CN 或 OPTIMIZE 为 true，跳过系统配置，直接进入功能菜单
 if [ "$goto_function_menu" == true ]; then
-    goto_function_menu=false  # 重置标志
-    # 功能菜单代码在此处...
+    goto_function_menu=false
 else
     # 系统配置
     if [ "$DEPLOY" == "true" ]; then
@@ -101,11 +148,11 @@ else
             mirror="deb http://http.kali.org/kali kali-rolling main non-free contrib"
         fi
         echo "$mirror" > /etc/apt/sources.list
-        apt update && apt upgrade -y && apt install wget curl whiptail -y && apt install kali-linux-core -y
+        apt update && apt upgrade -y && apt install wget curl whiptail -y && apt install kali-linux-core -y && apt install python3-prettytable -y
         log "[+] Mirror source configured as: $mirror" "${GREEN}[+] 镜像源已配置为: $mirror${NC}"
 
         # 更新 OPTIMIZE 配置为 true
-        sed -i 's/^OPTIMIZE=false/OPTIMIZE=true/' "$CONF_FILE"
+        sed -i 's/^OPTIMIZE: false/OPTIMIZE: true/' "$CONF_FILE"
         log "[+] OPTIMIZE set to true, entering Function Menu"
     fi
 fi
@@ -156,6 +203,93 @@ else
 fi
 }
 
+ssh_Start_service(){
+# 读取配置变量
+if pgrep -lf dropbear > /dev/null; then
+echo -e "检测到 Dropbear 的进程，将自动杀死并重启 Dropbear ssh"
+pkill dropbear
+fi
+SSH_IP="${SSH_IP:-127.0.0.1}"       
+SSH_PORT="${SSH_PORT:-8022}"
+SSH_LOG="${SSH_LOG:-false}"      
+SSH_BACK="${SSH_BACK:-true}"     
+SSH_SHELL="${SSH_SHELL:-ankali}"     
+
+# echo $SSH_IP
+# echo $SSH_PORT
+# echo $SSH_LOG
+# echo $SSH_BACK
+# echo $SSH_SHELL
+
+DROPBEAR_CMD="dropbear -p $SSH_IP:$SSH_PORT"
+
+houtaiyunxingssh(){
+if pgrep -lf dropbear > /dev/null; then
+    echo -e "${YELLOW}Dropbear SSH 正在后台运行:${NC}"
+    pgrep -lf dropbear
+    echo -e "${YELLOW}你可以使用此命令来连接你的ssh服务\n${GREEN}ssh -p ${BLUE}$SSH_PORT root@${RED}$SSH_IP${NC}"
+    sleep 1
+else
+    echo -e "${RED} [-]Dropbear ssh 启动失败，请检查配置文件 /.kali-config/Ankali.yaml 是否配置正确或者检查当日的日志文件 /.kali-config/log/$(date +'%Y-%m-%d').log${NC}"
+    sleep 0.5
+fi
+}
+
+if [ "$SSH_LOG" == "true" ]; then
+    DROPBEAR_CMD+=" -E"         
+fi
+
+if [ "$SSH_CLI" == "false" ]; then
+    DROPBEAR_CMD+=" -c $SSH_SHELL"         
+fi
+if [ "$SSH_BACK" == "false" ]; then
+    DROPBEAR_CMD+=" -F"          
+    echo -e "${YELLOW}Dropbear SSH 将在前台运行，CTRL+C 退出${NC}"
+    echo -e "${YELLOW}你可以使用此命令来连接你的ssh服务\n${GREEN}ssh -p ${BLUE}$SSH_PORT root@${RED}$SSH_IP${NC}"
+    $DROPBEAR_CMD
+else
+$DROPBEAR_CMD
+houtaiyunxingssh
+sleep 1
+fi
+}
+
+SSH_NOOPENMENU_DEPLOY(){
+if [ "$SSH_NOOPENMENU" == "true" ]; then
+# 读取配置变量
+if pgrep -lf dropbear > /dev/null; then
+log "已检测到 Dropbear 的进程，将跳过启动 Dropbear ssh"
+else
+SSH_IP="${SSH_IP:-127.0.0.1}"       
+SSH_PORT="${SSH_PORT:-8022}"
+SSH_LOG="${SSH_LOG:-false}"      
+SSH_BACK="${SSH_BACK:-true}"     
+SSH_SHELL="${SSH_SHELL:-ankali}"     
+DROPBEAR_CMD="dropbear -p $SSH_IP:$SSH_PORT"
+houtaiyunxingssh(){
+    if pgrep -lf dropbear > /dev/null; then
+        echo -e "${YELLOW}Dropbear SSH 正在后台运行:${NC}"
+        pgrep -lf dropbear
+        echo -e "${YELLOW}你可以使用此命令来连接你的ssh服务\n${GREEN}ssh -p ${BLUE}$SSH_PORT root@${RED}$SSH_IP${NC}"
+        sleep 0.2
+else
+        echo -e "${RED} [-]Dropbear ssh 启动失败，请检查配置文件 /.kali-config/Ankali.yaml 是否配置正确或者检查当日的日志文件 /.kali-config/log/$(date +'%Y-%m-%d').log${NC}"
+        sleep 0.2
+    fi
+}
+if [ "$SSH_LOG" == "true" ]; then
+    DROPBEAR_CMD+=" -E"         
+fi
+
+if [ "$SSH_CLI" == "false" ]; then
+    DROPBEAR_CMD+=" -c $SSH_SHELL"         
+fi
+$DROPBEAR_CMD
+houtaiyunxingssh
+fi
+fi
+}
+
 kali_titles(){
 if [ "$TITLES" == "true" ]; then
 log "[+]TITLES is true to display titles."
@@ -175,13 +309,14 @@ else
 log "[+]TITLES is false, and the title is not displayed."
 fi
 }
-
+# 自启动ssh
+SSH_NOOPENMENU_DEPLOY
 # 功能菜单
 while true; do
     kali_titles
     echo -e "\n${BLUE}========= 功能菜单 =========${NC}"
     echo -e "${GREEN}[1] 进入 Kali CLI${NC}"
-    echo -e "${GREEN}[2] 设置 root 账户密码${NC}"
+    echo -e "${GREEN}[2] 设置当前用户密码${NC}"
     echo -e "${GREEN}[3] 配置系统语言${NC}"
     echo -e "${GREEN}[4] 图形桌面 GUI 与 VNC 服务${NC}"
     echo -e "${GREEN}[5] 特殊键${NC}"
@@ -197,7 +332,11 @@ while true; do
             echo -e "${GREEN}[11] 修复chromium浏览器${NC}"
         fi
     fi
-    echo -e "${GREEN}\n[99] 安装最基本默认的工具集${NC}"
+    echo
+    if [ "$SSH_INITIALIZATION" == "true" ]; then
+    echo -e "${GREEN}[98] 启动ssh服务${NC}"
+    fi
+    echo -e "${GREEN}[99] 安装最基本默认的工具集${NC}"
     echo -e "${BLUE}============================${NC}"
     read -p "$(echo -e ${YELLOW}[*] 请输入对应功能的数字编号: ${NC})" choice
 
@@ -206,12 +345,12 @@ while true; do
             log "[+] Entering Kali CLI"
             kali_language
             echo "加载中..."
-            zsh -l
+            su - $LIUNXUSER -c 'zsh --login'
             break
             ;;
         2)
-            log "[+] Setting root account password"
-            passwd root
+            log "[+] Setting uesr account password"
+            sudo passwd $LIUNXUSER
             ;;
         3)
             log "[+] Configuring system language"
@@ -247,6 +386,7 @@ while true; do
         8)
             log "[+] Enter special key"
             /.kali-config/linux/setup
+            exit 0
             ;;
         9)
             log "[+] Enter special about"
@@ -280,6 +420,14 @@ while true; do
             else
                 log "[!] Invalid selection, please try again"
             fi
+            ;;
+        98)
+            if [ "$SSH_INITIALIZATION" == "true" ]; then
+            ssh_Start_service
+            else
+            log "[!] Invalid selection, please try again"
+            fi
+            
             ;;
         99)
                 log "[*] Do users install the most basic default toolset?" "${YELLOW}[!]即将安装kali-linux-default软件包，这将安装最基本的信息安全工具，它也代表了Kali Linux 默认安装的软件集合。但是要注意的是这也将会占用大约8GB的手机磁盘空间。\n如果想安装更多工具集，可以在 '设置 → 体验基本完整的kali工具集' 上安装${RESET}"

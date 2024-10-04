@@ -1,4 +1,4 @@
 #!/bin/bash
 chmod 777 /.kali-config/kali-run
-sed -i '/^NOOPENMENU=/s/false/true/' /.kali-config/Ankali.conf
+sed -i '/^NOOPENMENU: /s/false/true/' /.kali-config/Ankali.yaml
 /.kali-config/kali-run

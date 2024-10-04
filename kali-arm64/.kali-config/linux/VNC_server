@@ -1,4 +1,25 @@
 #!/bin/bash
+# Copyright (c) 2024 SansJtw
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# Email: sansjtw@163.com, sansjtw1@gmail.com
 
 # This script menu uses the installation startup of VNC service and the installation startup of graphical desktop.
 
@@ -74,6 +95,7 @@ apt update
 eatmydata apt install -y chromium chromium-l10n
 echo "xdg-settings set default-web-browser chromium.desktop"
 xdg-settings set default-web-browser chromium.desktop
+apt remove firefox-esr -y
 }
 
 # Repair time to China Shanghai time
@@ -96,25 +118,27 @@ Desktop_environment=$(cat ~/.kali-config/kali-desktop)
 else
 Desktop_environment="还没有桌面环境"
 fi
-echo -e """
-\033[1;33m
-+--------------+---------------+
-  VNC 服务         是否安装      
-+--------------+---------------+
- VNC server         ${VNCINSTALL}      
- NOVNC              ${NOVNCINSTALL}      
-+--------------+---------------+
 
-+-------------------------+
-已安装的桌面环境       
-+-------------------------+
-${Desktop_environment}
-+-------------------------+
+echo -e "\033[1;33m"
+headers="VNC 服务,是否安装"
+rows=(
+    "VNC server,$VNCINSTALL"
+    "NOVNC,$VNCINSTALL"
+)
+python3 /.kali-config/linux/table_gen.py "$headers" "${rows[@]}"
 
-VNC 密码: ${IFVNCPASSWD}
+headers="已安装的桌面环境"
+rows=(
+    "$Desktop_environment"
+)
+python3 /.kali-config/linux/table_gen.py "$headers" "${rows[@]}"
 
-\033[0m
-"""
+headers="VNC 密码"
+rows=(
+    "$IFVNCPASSWD"
+)
+python3 /.kali-config/linux/table_gen.py "$headers" "${rows[@]}"
+echo -e "\033[0m"
 }
 Dscription(){
 echo -e """
@@ -518,27 +542,27 @@ Desktop_environment=$(cat ~/.kali-config/kali-desktop)
 else
 Desktop_environment="No desktop environment yet."
 fi
-echo -e """
-\033[1;33m
-+-----------------+----------------+
-    VNC Service     Is installed?   
-+-----------------+----------------+
- VNC server          $VNCINSTALL   
- NOVNC               $NOVNCINSTALL  
-+-----------------+----------------+
+echo -e "\033[1;33m"
+headers="VNC Service,Is installed?"
+rows=(
+    "VNC server,$VNCINSTALL"
+    "NOVNC,$VNCINSTALL"
+)
+python3 /.kali-config/linux/table_gen.py "$headers" "${rows[@]}"
 
-+-----------------------------+
-Installed desktop environment.       
-+-----------------------------+
-${Desktop_environment}
-+-----------------------------+
+headers="Installed desktop environment."
+rows=(
+    "$Desktop_environment"
+)
+python3 /.kali-config/linux/table_gen.py "$headers" "${rows[@]}"
 
-VNC Password: ${IFVNCPASSWD}
-
-\033[0m
-"""
+headers="VNC Password"
+rows=(
+    "$IFVNCPASSWD"
+)
+python3 /.kali-config/linux/table_gen.py "$headers" "${rows[@]}"
+echo -e "\033[0m"
 }
-
 Dscription(){
 echo -e """
 ￴￴￴￴ ￴￴ ￴￴ ￴ ￴ ￴￴￴ ￴￴￴￴ ￴￴ ￴￴￴￴ ￴￴ ￴ ￴￴￴ ￴ ￴￴▃ ▆ █
@@ -927,8 +951,19 @@ done
 }
 
 # Judging Chinese or English
-CONFIG_FILE="/.kali-config/Ankali.conf"
-LANGUAGE=$(grep -v '^//' "$CONFIG_FILE" | grep -w 'LANGUAGE' | cut -d '=' -f2)
+CONFIG_FILE="/.kali-config/Ankali.yaml"
+# 确保配置文件存在
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo -e "${RED}[-] Configuration file does not exist：$CONFIG_FILE ${NC}"
+    exit 1
+fi
+
+# 读取配置文件中的值，忽略注释行
+get_config_value() {
+    local key=$1
+    grep "^$key:" "$CONFIG_FILE" | cut -d ' ' -f 2-
+}
+LANGUAGE=$(get_config_value "LANGUAGE")
 if [ "$LANGUAGE" = "CN" ]; then
     menu_cn
 elif [ "$LANGUAGE" = "EN" ]; then

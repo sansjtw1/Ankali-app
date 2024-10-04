@@ -1,0 +1,33 @@
+# Ankali initialization
+INITIALIZATION: false
+# Menu language, only supports CN and EN
+LANGUAGE: CN
+# Automatically enter the feature menu on software start
+NOOPENMENU: true
+# Run neofetch
+NEOFETCH: true
+# The script has been optimized
+OPTIMIZE: false
+# The system has been configured
+DEPLOY: false
+# Display title
+TITLES: true
+# Configure Linux users
+LIUNXUSER: root
+
+# Whether to initialize the SSH service
+SSH_INITIALIZATION: false
+# Auto-start SSH service on software start
+SSH_NOOPENMENU: false
+# Set port
+SSH_PORT: 8022
+# Set IP
+SSH_IP: 127.0.0.1
+# Enable log display
+SSH_LOG: false
+# Run in the background
+SSH_BACK: false
+# Login shell command
+SSH_SHELL: ankali
+# Directly enter CLI after SSH login
+SSH_CLI: false

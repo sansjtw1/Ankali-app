@@ -1,10 +1,27 @@
 #!/bin/bash
+# Copyright (c) 2024 SansJtw
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# Email: sansjtw@163.com, sansjtw1@gmail.com
 
 # 介绍我自己! ✧⁺⸜(●˙▾˙●)⸝⁺
-
-CONFIG_FILE="/.kali-config/Ankali.conf"
-
-LANGUAGE=$(grep -v '^//' "$CONFIG_FILE" | grep -w 'LANGUAGE' | cut -d '=' -f2)
 
 about_cn(){
 echo "Ankali App是一款利用Proot在非Linux环境下的Android设备上创建一个隔离的无需在Android上获取Root的“chroot”环境模拟来运行Kali Linux环境。
@@ -21,6 +38,7 @@ Ankali App说明链接:
 - Github官方仓库: https://github.com/sansjtw1/Ankali-app
 - 免责声明: https://gitee.com/sansjtw/Ankali-app/blob/master/免责声明.md
 - 隐私条约: https://gitee.com/sansjtw/Ankali-app/blob/master/隐私条约.md
+- Ankali 中文文档: https://ankali-docs.netlify.app/cn/
 "
 echo
 echo "按回車鍵繼續"
@@ -40,11 +58,26 @@ Ankali App documentation links:
 - GitHub repository official: https://github.com/sansjtw1/Ankali-app
 - Disclaimer: https://github.com/sansjtw1/Ankali-app/blob/master/Disclaimer.md
 - Privacy Policy: https://github.com/sansjtw1/Ankali-app/blob/master/Privacy%20Policy.md
+- Ankali Documentation: https://ankali-docs.netlify.app/
 "
 echo "Press enter to continue."
 read
 }
 
+# Judging Chinese or English
+CONFIG_FILE="/.kali-config/Ankali.yaml"
+# 确保配置文件存在
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo -e "${RED}[-] Configuration file does not exist：$CONFIG_FILE ${NC}"
+    exit 1
+fi
+
+# 读取配置文件中的值，忽略注释行
+get_config_value() {
+    local key=$1
+    grep "^$key:" "$CONFIG_FILE" | cut -d ' ' -f 2-
+}
+LANGUAGE=$(get_config_value "LANGUAGE")
 if [ "$LANGUAGE" = "CN" ]; then
     about_cn
 elif [ "$LANGUAGE" = "EN" ]; then

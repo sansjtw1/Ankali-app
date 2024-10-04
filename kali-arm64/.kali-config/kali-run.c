@@ -1,3 +1,24 @@
+// Copyright (c) 2024 Ankali SansJtw
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
+// Email: sansjtw@163.com, sansjtw1@gmail.com
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,6 +26,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <ctype.h>
 
 // 设置颜色
 #define RED "\033[0;31m"
@@ -19,7 +41,7 @@
 
 // 日志目录和文件
 #define LOG_DIR "/.kali-config/log"
-#define CONFIG_FILE "/.kali-config/Ankali.conf"
+#define CONFIG_FILE "/.kali-config/Ankali.yaml"
 #define LANGUAGE_CONF "/.kali-config/language.conf"
 
 // 获取当前日期字符串
@@ -58,9 +80,9 @@ char* read_config_value(const char *file_path, const char *key) {
     char line[512];
     while (fgets(line, sizeof(line), file) != NULL) {
         if (strncmp(line, key, strlen(key)) == 0) {
-            char *eq = strchr(line, '=');
-            if (eq) {
-                strncpy(value, eq + 1, sizeof(value));
+            char *colon = strchr(line, ':'); // 查找冒号
+            if (colon) {
+                strncpy(value, colon + 1, sizeof(value));
                 value[strcspn(value, "\n")] = '\0'; // 移除换行符
                 fclose(file);
                 return value;
@@ -72,29 +94,69 @@ char* read_config_value(const char *file_path, const char *key) {
     return NULL;
 }
 
+// 去除字符串首尾空格
+char* trim(char *str) {
+    char *end;
+
+    // 去掉首部空格
+    while(isspace((unsigned char)*str)) str++;
+
+    // 如果字符串全是空格，则返回空字符串
+    if(*str == 0)
+        return str;
+
+    // 去掉尾部空格
+    end = str + strlen(str) - 1;
+    while(end > str && isspace((unsigned char)*end)) end--;
+
+    // 在末尾加上终止符
+    *(end + 1) = '\0';
+
+    return str;
+}
+
+
+
 // 更新配置项
 int update_config_value(const char *file_path, const char *key, const char *new_value) {
     FILE *file = fopen(file_path, "r+");
     if (file == NULL) {
-        perror("Error opening config file");
-        return -1;
+        perror("Error opening config file for update");
+        return -1;  // 文件打开失败，返回错误
     }
 
-    char line[512];
-    long pos;
-    while (fgets(line, sizeof(line), file) != NULL) {
-        if (strncmp(line, key, strlen(key)) == 0) {
-            pos = ftell(file);
-            fseek(file, pos - strlen(line), SEEK_SET);
-            fprintf(file, "%s=%s\n", key, new_value);
-            fclose(file);
-            return 0;
+    char buffer[512];
+    char new_buffer[4096] = {0}; // 用于存储文件的新内容，假设文件不会非常大
+    int key_found = 0;
+
+    // 逐行读取文件
+    while (fgets(buffer, sizeof(buffer), file) != NULL) {
+        // 查找以 key 开头的行
+        if (strncmp(buffer, key, strlen(key)) == 0) {
+            // 替换该行的值
+            snprintf(buffer, sizeof(buffer), "%s: %s\n", key, new_value);
+            key_found = 1;
         }
+        // 拼接到新的文件内容中
+        strcat(new_buffer, buffer);
     }
 
-    fprintf(file, "%s=%s\n", key, new_value); // 若key不存在，添加新key
+    if (!key_found) {
+        // 如果没有找到 key，则在文件末尾添加它
+        snprintf(buffer, sizeof(buffer), "%s: %s\n", key, new_value);
+        strcat(new_buffer, buffer);
+    }
+
+    // 清空文件指针并写入新内容
+    freopen(file_path, "w", file);
+    if (fputs(new_buffer, file) == EOF) {
+        perror("Error writing to config file");
+        fclose(file);
+        return -2;  // 写入文件失败，返回错误
+    }
+
     fclose(file);
-    return 0;
+    return 0;  // 成功返回 0
 }
 
 // 显示条约信息
@@ -139,8 +201,8 @@ void initialize_language() {
             log_message(INFO " Adding shortcuts as per user request.");
             system("cp -r /.kali-config/desktop/Ankali /usr/share/");
             system("cp /.kali-config/desktop/applications/Ankali.desktop /usr/share/applications/");
-            system("ln -s /usr/share/Ankali/exec/ankali /bin/ankali");
-            system("ln -s /usr/share/Ankali/exec/ankali /bin/kali-menu");
+            system("ln -s /usr/share/Ankali/exec/ankali /usr/bin/ankali");
+            system("ln -s /usr/share/Ankali/exec/ankali /usr/bin/kali-menu");
             system("chmod -R 755 /usr/share/Ankali");
             system("chmod 755 /usr/share/applications/Ankali.desktop");
             log_message(SUCCESS " Shortcuts added successfully.");
@@ -202,6 +264,9 @@ int main() {
         return 1;
     }
 
+    // 去除空格
+    initialization = trim(initialization);
+
     log_message(INFO " Initial value of INITIALIZATION: ");
     log_message(initialization);
 
@@ -216,26 +281,33 @@ int main() {
             return 1;
         }
 
+        // 去除空格
+        language = trim(language);
+
         log_message(INFO " INITIALIZATION is true, LANGUAGE: ");
         log_message(language);
 
         if (strcmp(language, "EN") == 0) {
             log_message(INFO " Executing English script: /.kali-config/kali_conf");
+            // printf(INFO " Executing English script: /.kali-config/kali_conf");
             system("/.kali-config/kali_conf");
         } else if (strcmp(language, "CN") == 0) {
-            log_message(INFO " Executing Chinese script: /.kali-config/kali_conf_cn");
+            // printf(INFO " Executing Chinese script: /.kali-config/kali_conf_cn");
             system("/.kali-config/kali_conf_cn");
         } else {
+            // printf(ERROR " LANGUAGE is unknown or missing. Resetting INITIALIZATION to false.");
             log_message(ERROR " LANGUAGE is unknown or missing. Resetting INITIALIZATION to false.");
             update_config_value(CONFIG_FILE, "INITIALIZATION", "false");
         }
     } else {
+        // printf(ERROR " INITIALIZATION configuration is invalid. Resetting to false.");
         log_message(ERROR " INITIALIZATION configuration is invalid. Resetting to false.");
         update_config_value(CONFIG_FILE, "INITIALIZATION", "false");
     }
 
     return 0;
 }
+
 
 
 // ©Sansjtw Ankali

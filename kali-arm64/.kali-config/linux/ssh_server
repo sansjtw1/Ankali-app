@@ -1,0 +1,455 @@
+#!/bin/bash
+# Copyright (c) 2024 Ankali SansJtw
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# Email: sansjtw@163.com, sansjtw1@gmail.com
+
+# 日志文件路径
+LOG_DIR="/.kali-config/log"
+LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d').log"
+
+# 创建日志文件夹
+mkdir -p "$LOG_DIR"
+
+# 配置文件路径
+CONF_FILE="/.kali-config/Ankali.yaml"
+
+# 确保配置文件存在
+if [ ! -f "$CONF_FILE" ]; then
+    echo -e "${RED}[-] Configuration file does not exist：$CONF_FILE ${NC}"
+    exit 1
+fi
+
+read_config() {
+    local key=$1
+    grep "^$key:" "$CONF_FILE" | cut -d ' ' -f 2-
+}
+
+SSH_INITIALIZATION=$(read_config "SSH_INITIALIZATION")
+SSH_NOOPENMENU=$(read_config "SSH_NOOPENMENU")
+SSH_PORT=$(read_config "SSH_PORT")
+SSH_IP=$(read_config "SSH_IP")
+SSH_LOG=$(read_config "SSH_LOG")
+SSH_BACK=$(read_config "SSH_BACK")
+SSH_SHELL=$(read_config "SSH_SHELL")
+SSH_CLI=$(read_config "SSH_CLI")
+LANGUAGE=$(read_config "LANGUAGE")
+
+# 保存配置
+save_config() {
+    sed -i "s/^SSH_INITIALIZATION:.*/SSH_INITIALIZATION: $SSH_INITIALIZATION/" "$CONF_FILE"
+    sed -i "s/^SSH_NOOPENMENU:.*/SSH_NOOPENMENU: $SSH_NOOPENMENU/" "$CONF_FILE"
+    sed -i "s/^SSH_PORT:.*/SSH_PORT: $SSH_PORT/" "$CONF_FILE"
+    sed -i "s/^SSH_IP:.*/SSH_IP: $SSH_IP/" "$CONF_FILE"
+    sed -i "s/^SSH_LOG:.*/SSH_LOG: $SSH_LOG/" "$CONF_FILE"
+    sed -i "s/^SSH_BACK:.*/SSH_BACK: $SSH_BACK/" "$CONF_FILE"
+    sed -i "s/^SSH_SHELL:.*/SSH_SHELL: $SSH_SHELL/" "$CONF_FILE"
+    sed -i "s/^SSH_CLI:.*/SSH_CLI: $SSH_CLI/" "$CONF_FILE"
+    
+    log "Configuration saved." "[+] Configuration has been saved."
+    sleep 0.5
+    main_menu
+}
+
+# 日志记录函数
+log() {
+    echo -e "$1" >> "$LOG_FILE"
+    echo -e "$2"
+}
+
+# 颜色提示
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+RESET="\e[0m"
+
+# 中文菜单
+CN_MENU(){
+# 初始菜单显示
+initial_menu() {
+    headers="dropbear ssh服务设置"
+    rows=(
+    "未初始化"
+    )
+    python3 /.kali-config/linux/table_gen.py "$headers" "${rows[@]}"
+    echo -e "    ${GREEN}dropbear ssh服务设置${RESET}"
+    echo -e "[-] [1] 初始化dropbear"
+    echo -e "[-] [0] 退出"
+}
+
+main_menu() {
+    echo -e "\033[1;33m"
+    headers="dropbear ssh服务设置,状态"
+    rows=(
+    "SSH服务自启动,$([[ "$SSH_NOOPENMENU" == "true" ]] && echo "开启" || echo "关闭")"
+    "SSH服务端口号,$SSH_PORT"
+    "SSH服务IP地址,$SSH_IP"
+    "SSH服务显示日志信息,$([[ "$SSH_LOG" == "true" ]] && echo "开启" || echo "关闭")"
+    "SSH客户连接直接进入CLI(不进入功能菜单),$([[ "$SSH_CLI" == "true" ]] && echo "开启" || echo "关闭")"
+    "SSH后台启动(功能菜单),$([[ "$SSH_BACK" == "true" ]] && echo "开启" || echo "关闭")"
+    )
+    python3 /.kali-config/linux/table_gen.py "$headers" "${rows[@]}"
+    echo -e "\033[0m"
+    echo -e "    ${GREEN}dropbear ssh服务设置${RESET}"
+    echo -e "[1] 打开软件时自动启动: $([[ "$SSH_NOOPENMENU" == "true" ]] && echo "开启" || echo "关闭")"
+    echo -e "[2] 端口号: $SSH_PORT"
+    echo -e "[3] IP地址: $SSH_IP"
+    echo -e "[4] 显示日志信息: $([[ "$SSH_LOG" == "true" ]] && echo "开启" || echo "关闭")"
+    echo -e "[5] 连接后直接进入 CLI: $([[ "$SSH_CLI" == "true" ]] && echo "开启" || echo "关闭")"
+    echo -e "[6] 在 Ankali 功能菜单启动 ssh 服务后台启动: $([[ "$SSH_BACK" == "true" ]] && echo "开启" || echo "关闭")"
+    echo -e "[7] 杀死运行的 Dropbear 进程"
+    echo -e "[8] 配置 root 账号密码用于连接时登录 ssh"
+    echo -e "[9] 重置 keys 密钥"
+    echo -e "[10] 恢复默认配置"
+    echo -e "[0] 退出"
+}
+
+# 恢复默认配置
+reset_config() {
+    SSH_INITIALIZATION=true
+    SSH_NOOPENMENU=false
+    SSH_PORT=8022
+    SSH_IP=127.0.0.1
+    SSH_LOG=false
+    SSH_BACK=false
+    SSH_SHELL=ankali
+    SSH_CLI=false
+    save_config
+    exit 0
+}
+
+# 处理输入
+handle_choice() {
+    case "$1" in
+        1)
+            SSH_NOOPENMENU=$([[ "$SSH_NOOPENMENU" == "true" ]] && echo "false" || echo "true")
+            save_config
+            ;;
+        2)
+            echo -n "[*] 请输入启动ssh服务时的端口号(1024-49151): "
+            read new_port
+            if [[ "$new_port" =~ ^[0-9]+$ ]] && [ "$new_port" -ge 1024 ] && [ "$new_port" -le 49151 ]; then
+                SSH_PORT="$new_port"
+                echo -e "${YELLOW}\n[*] 端口已设置为: $new_port${NC}"
+                save_config
+            else
+                echo -e "[-] ${RED}无效的端口号${RESET}"
+                sleep 0.5
+                main_menu
+            fi
+            ;;
+        3)
+            echo -n "[*] 请输入启动ssh服务时的IP地址: "
+            read new_ip
+            if [[ "$new_ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                SSH_IP="$new_ip"
+                echo -e "${YELLOW}\n[*] 端口已设置为: $new_ip${NC}"
+                save_config
+            else
+                echo -e "[-] ${RED}无效的IP地址${RESET}"
+                sleep 0.5
+                main_menu
+            fi
+            ;;
+        4)
+            SSH_LOG=$([[ "$SSH_LOG" == "true" ]] && echo "false" || echo "true")
+            save_config
+            ;;
+        5)
+            SSH_CLI=$([[ "$SSH_CLI" == "true" ]] && echo "false" || echo "true")
+            save_config
+            ;;
+        6)
+            SSH_BACK=$([[ "$SSH_BACK" == "true" ]] && echo "false" || echo "true")
+            save_config
+            ;;
+        7)
+            if pgrep -lf dropbear > /dev/null; then
+                echo -e "${YELLOW}[*] 找到了正在运行的 Dropbear 进程:${RESET}"
+                pgrep -lf dropbear
+                echo -e "${GREEN}[*] 现在将杀死他们 pkill dropbear ${RESET}"
+                pkill dropbear
+                sleep 0.5
+                main_menu
+            else
+                echo -e "${RED}[-] Dropbear 未运行${RESET}"
+                sleep 0.5
+                main_menu
+            fi
+            ;;
+        8)
+            passwd
+            main_menu
+            ;;
+        9)
+            rm /etc/dropbear/dropbear_{rsa,ecdsa,ed25519}_host_key
+            dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key -s 2048
+            dropbearkey -t ecdsa -f /etc/dropbear/dropbear_ecdsa_host_key -s 521
+            dropbearkey -t ed25519 -f /etc/dropbear/dropbear_ed25519_host_key
+            main_menu
+            ;;
+        10)
+            reset_config
+            ;;
+        
+        0)
+            log "User exited the script." "[+] 用户退出。"
+            exit 0
+            ;;
+        *)
+            echo -e "[-] ${RED}无效的选择，请重试${RESET}"
+            main_menu
+            ;;
+    esac
+}
+
+# 初始化菜单处理
+initialize_dropbear() {
+    apt update
+    apt install -y dropbear
+    if dpkg -l | grep -q "dropbear"; then
+        SSH_INITIALIZATION=true
+        save_config
+        log "Dropbear installed successfully." "[+] Dropbear安装成功。"
+        /.kali-config/linux/ssh_server
+        exit 0
+    else
+        log "Dropbear installation failed." "[-] Dropbear安装失败。"
+    fi
+}
+
+# 运行主脚本
+read_config
+if [[ "$SSH_INITIALIZATION" == "false" ]]; then
+    initial_menu
+    while true; do
+        echo -n "[*] 请选择: "
+        read choice
+        case "$choice" in
+            1)
+                initialize_dropbear
+                ;;
+            0)
+                log "User exited the script." "[+] 用户退出。"
+                exit 0
+                ;;
+            *)
+                echo -e "[-] ${RED}无效的选择，请重试${RESET}"
+                ;;
+        esac
+    done
+else
+    main_menu
+    while true; do
+        echo -n "[*] 请选择: "
+        read choice
+        handle_choice "$choice"
+    done
+fi
+}
+
+# English menu
+EN_MENU(){
+initial_menu() {
+    echo -e "    ${GREEN}Dropbear SSH Service Settings${RESET}"
+    echo -e "[-] [1] Initialize Dropbear"
+    echo -e "[-] [0] Exit"
+}
+
+# Main menu display
+main_menu() {
+    echo -e "\033[1;33m"
+    headers="Dropbear SSH Service Settings,Status"
+    rows=(
+    "Auto-start SSH service,$([[ "$SSH_NOOPENMENU" == "true" ]] && echo "Enabled" || echo "Disabled")"
+    "SSH service port number,$SSH_PORT"
+    "SSH service IP address,$SSH_IP"
+    "Display SSH service log information,$([[ "$SSH_LOG" == "true" ]] && echo "Enabled" || echo "Disabled")"
+    "SSH client connects directly to CLI (skips feature menu),$([[ "$SSH_CLI" == "true" ]] && echo "Enabled" || echo "Disabled")"
+    "SSH background startup (feature menu),$([[ "$SSH_BACK" == "true" ]] && echo "Enabled" || echo "Disabled")"
+    )
+    python3 /.kali-config/linux/table_gen.py "$headers" "${rows[@]}"
+    echo -e "\033[0m"
+    echo -e "    ${GREEN}Dropbear SSH Service Settings${RESET}"
+    echo -e "[1] Auto-start on software launch: $([[ "$SSH_NOOPENMENU" == "true" ]] && echo "Enabled" || echo "Disabled")"
+    echo -e "[2] Port: $SSH_PORT"
+    echo -e "[3] IP Address: $SSH_IP"
+    echo -e "[4] Show log info: $([[ "$SSH_LOG" == "true" ]] && echo "Enabled" || echo "Disabled")"
+    echo -e "[5] Directly enter CLI after connection: $([[ "$SSH_CLI" == "true" ]] && echo "Enabled" || echo "Disabled")"
+    echo -e "[6] Start SSH service in the background through Ankali menu: $([[ "$SSH_BACK" == "true" ]] && echo "Enabled" || echo "Disabled")"
+    echo -e "[7] Kill running Dropbear process"
+    echo -e "[8] Set root account password for SSH login"
+    echo -e "[9] Reset keys"
+    echo -e "[10] Restore default settings"
+    echo -e "[0] Exit"
+}
+
+# Restore default settings
+reset_config() {
+    SSH_INITIALIZATION=true
+    SSH_NOOPENMENU=false
+    SSH_PORT=8022
+    SSH_IP=127.0.0.1
+    SSH_LOG=false
+    SSH_BACK=false
+    SSH_SHELL=ankali
+    SSH_CLI=false
+    save_config
+    exit 0
+}
+
+# Handle user input
+handle_choice() {
+    case "$1" in
+        1)
+            SSH_NOOPENMENU=$([[ "$SSH_NOOPENMENU" == "true" ]] && echo "false" || echo "true")
+            save_config
+            ;;
+        2)
+            echo -n "[*] Please enter the port number for starting SSH (1024-49151): "
+            read new_port
+            if [[ "$new_port" =~ ^[0-9]+$ ]] && [ "$new_port" -ge 1024 ] && [ "$new_port" -le 49151 ]; then
+                SSH_PORT="$new_port"
+                echo -e "${YELLOW}\n[*] Port set to: $new_port${NC}"
+                save_config
+            else
+                echo -e "[-] ${RED}Invalid port number${RESET}"
+                sleep 0.5
+                main_menu
+            fi
+            ;;
+        3)
+            echo -n "[*] Please enter the IP address for starting SSH: "
+            read new_ip
+            if [[ "$new_ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                SSH_IP="$new_ip"
+                echo -e "${YELLOW}\n[*] IP set to: $new_ip${NC}"
+                save_config
+            else
+                echo -e "[-] ${RED}Invalid IP address${RESET}"
+                sleep 0.5
+                main_menu
+            fi
+            ;;
+        4)
+            SSH_LOG=$([[ "$SSH_LOG" == "true" ]] && echo "false" || echo "true")
+            save_config
+            ;;
+        5)
+            SSH_CLI=$([[ "$SSH_CLI" == "true" ]] && echo "false" || echo "true")
+            save_config
+            ;;
+        6)
+            SSH_BACK=$([[ "$SSH_BACK" == "true" ]] && echo "false" || echo "true")
+            save_config
+            ;;
+        7)
+            if pgrep -lf dropbear > /dev/null; then
+                echo -e "${YELLOW}[*] Running Dropbear processes found:${RESET}"
+                pgrep -lf dropbear
+                echo -e "${GREEN}[*] Now killing them using pkill dropbear ${RESET}"
+                pkill dropbear
+                sleep 0.5
+                main_menu
+            else
+                echo -e "${RED}[-] Dropbear is not running${RESET}"
+                sleep 0.5
+                main_menu
+            fi
+            ;;
+        8)
+            passwd
+            main_menu
+            ;;
+        9)
+            rm /etc/dropbear/dropbear_{rsa,ecdsa,ed25519}_host_key
+            dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key -s 2048
+            dropbearkey -t ecdsa -f /etc/dropbear/dropbear_ecdsa_host_key -s 521
+            dropbearkey -t ed25519 -f /etc/dropbear/dropbear_ed25519_host_key
+            main_menu
+            ;;
+        10)
+            reset_config
+            ;;
+        
+        0)
+            log "User exited the script." "[+] User exited."
+            exit 0
+            ;;
+        *)
+            echo -e "[-] ${RED}Invalid choice, please try again${RESET}"
+            main_menu
+            ;;
+    esac
+}
+
+# Initialize menu handling
+initialize_dropbear() {
+    apt update
+    apt install -y dropbear
+    if dpkg -l | grep -q "dropbear"; then
+        SSH_INITIALIZATION=true
+        save_config
+        log "Dropbear installed successfully." "[+] Dropbear installation successful."
+        /.kali-config/linux/ssh_server
+        exit 0
+    else
+        log "Dropbear installation failed." "[-] Dropbear installation failed."
+    fi
+}
+
+# Run main script
+read_config
+if [[ "$SSH_INITIALIZATION" == "false" ]]; then
+    initial_menu
+    while true; do
+        echo -n "[*] Please choose: "
+        read choice
+        case "$choice" in
+            1)
+                initialize_dropbear
+                ;;
+            0)
+                log "User exited the script." "[+] User exited."
+                exit 0
+                ;;
+            *)
+                echo -e "[-] ${RED}Invalid choice, please try again${RESET}"
+                ;;
+        esac
+    done
+else
+    main_menu
+    while true; do
+        echo -n "[*] Please choose: "
+        read choice
+        handle_choice "$choice"
+    done
+fi
+}
+
+#Judgement value
+if [ "$LANGUAGE" = "CN" ]; then
+    CN_MENU
+elif [ "$LANGUAGE" = "EN" ]; then
+    EN_MENU
+else
+    EN_MENU
+fi
