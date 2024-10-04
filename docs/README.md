@@ -1,5 +1,5 @@
 # AnKali APP
 
-## /docs 目录
+## /docs Directory
 
-此目录下均为Ankali文档网页源码，包括Ankali中文文档，他的网页源码在`/docs/cn`内
+All contents under this directory are the source codes for Ankali documentation web pages, including the Chinese documentation for Ankali, which is located within `/docs/cn`.
